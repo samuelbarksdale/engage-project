@@ -1,0 +1,108 @@
+import React, {Component} from 'react';
+import {Form, Button, Col, Container, Table} from 'react-bootstrap'
+import api from '../api';
+
+export default class StudentAttendance extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {attendance: "", did: "", display: "none"}
+        this.setDisplay = this.setDisplay.bind(this);
+        this.renderTableData = this.renderTableData.bind(this);
+        this.test = this.test.bind(this);
+    }
+
+    async renderTableData(){
+        this.setState({display:"block"});
+        let data = await api.getAttendance();
+        console.log(this.state.did)
+
+        // TEMPORARY DATA FOR TESTING
+        let today = new Date ();
+        let yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 2);
+        let anotherDay = new Date();
+        anotherDay.setDate(anotherDay.getDate() - 5);
+        let bloopDay = new Date();
+        bloopDay.setDate(bloopDay.getDate() - 6);
+        let data2 = [
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: yesterday},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: anotherDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "jack", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "whwadawd", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "waifaiwfb", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "febajf", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+        ]
+        var uidDict = {}
+        data2.map(function (record, index) {
+            if (record.uid in uidDict){
+                uidDict[record.uid].push(record.timestamp.toDateString())
+            } else {
+                uidDict[record.uid] = [record.timestamp.toDateString()]
+            }
+        })
+        console.log(uidDict[this.state.did]);
+        uidDict[this.state.did].sort(function(first, second) {
+            var date1 = new Date(first)
+            var date2 = new Date(second)
+            return date1 > date2 
+        })
+        var dateString = ""
+        uidDict[this.state.did].map(function(date, index) {
+            dateString += date + ", "
+        })
+        dateString = dateString.slice(0, -2)
+        console.log(dateString)
+        this.setState({attendance: dateString})
+        // return (
+        //     <tr key={this.state.did}>
+        //         <td>{this.state.did}</td>
+        //         <td>{"hello"}</td>
+        //     </tr>
+        // )
+
+    }
+
+    setDisplay(){
+        this.setState({display:"block"});
+    }
+
+    test(){
+        console.log("hello")
+    }
+
+    render() {
+        return (
+            <div>
+                <Form>
+                    <Form.Label> Filter Student </Form.Label>
+                    <Form.Control
+                        onChange={(e) => {this.setState({did: e.target.value})}} 
+                        value={this.state.did}
+                        type="text" 
+                        placeholder="Enter student directory id" 
+                    />
+                    <Form.Row><Button onClick={this.renderTableData} style={{marginTop: "10px"}} variant="success" size="md">Search</Button></Form.Row>
+                </Form>
+                <h1 id='title' style={{display:this.state.display}}>Attendance</h1>
+                <div id="student_attendance" style={{display:this.state.display}}>
+                {/* <h1 id='title' >Attendance</h1>
+                <div id="student_attendance" > */}
+                    <Table striped bordered hover id='student'>
+                        <tr>
+                            <th>Directory ID</th>
+                            <th>Dates Attended</th>
+                        </tr>
+                            <tbody>
+                                <tr key={this.state.did}>
+                                    <td>{this.state.did}</td>
+                                    <td>{this.state.attendance}</td>
+                                </tr>
+                            </tbody>
+                    </Table>
+                </div>
+            </div>
+        )
+    }
+}

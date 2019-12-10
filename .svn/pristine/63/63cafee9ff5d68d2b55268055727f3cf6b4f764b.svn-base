@@ -1,0 +1,245 @@
+import mongoose from 'mongoose';
+import {PollModel} from "../schemas/pollSchema";
+import {UserModel} from "../schemas/userSchema";
+import ServerError from '../helpers/ServerError'
+
+export default {
+    listPolls: async function(req, res) {
+        let {courseId, type, status, creator} = req.query
+        
+        let filter = {};
+        if (courseId) filter = Object.assign(filter, {courseId})
+        if (courseId) filter = Object.assign(filter, {type})
+        if (courseId) filter = Object.assign(filter, {status})
+        if (courseId) filter = Object.assign(filter, {creator})
+        try {
+            let polls = PollModel.find(filter).exec();
+            return res.json(polls)
+        }catch (err) {
+            console.error(err);
+            return res.senStatus(500);
+        }
+    },
+
+    create: async function(req, res) {
+        try { 
+            let educator = await UserModel.findOne({did: req.session.cas.user}).exec();
+            if (!educator || educator.authority !== 'ADMIN') throw new ServerError("You must be an educator to make polls!", 400)
+            
+            let pollObj = {};
+            if (!req.body.type || req.body.type.length === 0) return res.status(400).json({message: "type is a required field"})
+            else pollObj.type = req.body.type.toLowerCase();
+
+            if (pollObj.type == 'choice') {
+                if (!req.body.choices || req.body.choices.length === 0) return res.status(400).json({message: "Choices array is empty"})
+                pollObj.choices = req.body.choices.map((choice, idx) => {
+                    return {
+                        choice_id: idx,
+                        choice: choice,
+                        voters: [],
+                        votes: 0
+                    }
+                });
+            } else if(pollObj.type == "text") {
+                if (req.body.choices) return res.status(400).json({message: "Poll type text cannot have choices"});
+            } else return res.status(400).json({message: "Invalid type: poll type must be either text or choice"});
+
+            if (!req.body.courseId || req.body.course_id.length === 0) return res.status(400).json({message: "course_id is a required field"});
+            else pollObj.courseId = req.body.course_id.toLowerCase();
+
+            if (!req.body.question) return res.status(400).json({message: "question is a reqired field"});
+            else pollObj.question = req.body.question;
+            
+            let poll = Object.assign(
+                pollObj,
+                {
+                    status: "open",
+                    creator: educator.uid,
+                },
+            )
+            var newPoll = new PollModel(poll);
+            newPoll.save();
+            res.status(201).json(newPoll);
+        } catch (e){
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+
+        }
+    },
+
+    listByCourseId: async function (req, res) {
+        PollModel.find({'courseId': req.params.courseId}, (err, polls) => {
+            if (err) console.error(err);
+            res.json(polls);
+        })
+    },
+
+    listByStudent: async function (req, res) {
+        PollModel.find({$or:[{'choices.voters': req.params.studentId},{'text_answers.uid': req.params.studentId}]},
+        (err, polls) => {
+            var ans = [];
+            polls.map((po) => {
+                var cho = po.choices;
+                var txt = po.text_answers;
+                cho.map((c) => {
+                    var vtrs = c.voters;
+                    vtrs.map((v) => {
+                        if (v.uid == req.params.studentId) {
+                            ans.push({question: po.question, choice: c.choiceId, votes: c.votes});
+                        }
+                    })
+                })
+                txt.map((t) => {
+                    if (t.uid == req.params.studentId) {
+                        ans.push({question: po.question, answer: t.answer});
+                    }
+                })
+            })
+            if (err) console.error(err);
+            res.json(ans);
+        })
+    },
+
+    retrieveById: async function (req, res) {
+        let {pollId} = req.params;
+        PollModel.findById(pollId, (err, polls) => {
+            if (err) console.error(err);
+            if (polls == null) return res.status(404).json({message: "No poll by that id"})
+            return res.json(polls);
+        })
+    },
+
+    deleteById: async function (req, res) {
+        try {
+            let {pollId} = req.params;
+            let requestedPoll = PollModel.findById(pollId);
+
+            let educator = await UserModel.findOne({did: req.session.cas.user}).exec();
+            if (!educator || educator.authority !== 'ADMIN') throw new ServerError("only educators can delete a poll!", 400)
+            if (!requestedPoll) res.status(404);
+            if (requestedPoll.creator !== educator.uid) res.status(403);
+
+            PollModel.deleteOne({'_id': pollId}, (err) => {
+                if (err) return console.error(err);
+                return res.sendStatus(204);
+            })
+        } catch (e) {
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+        }
+    },
+
+    retrievePollChoice: async function (req, res) {
+        await PollModel.findOne(
+            {'_id': req.params.pollId, 'choices.choiceId': req.params.choiceId},
+            (err, polls) => {
+                if (err) console.error(err);
+                var cho = polls.choices;
+                var cho_id;
+                cho.map((choice) => {
+                    if (choice.choiceId == req.params.choiceId) {
+                        cho_id = choice;
+                    }
+                })
+                res.json(cho_id);
+            }
+        )
+    },
+    
+    insterVote: async function (req, res) {
+        try {
+            let {pollId, choiceId} = req.params;
+            let user = await UserModel.findOne({did: req.session.cas.user}).exec();
+
+            let requestedPoll = await PollModel.findById(pollId).exec();
+            if (!requestedPoll) return res.sendStatus(404);
+            if (requestedPoll.type == 'text') return res.status(400).json({message: "Cannot perform a vote action on a text poll "});
+            if (requestedPoll.status == 'closed') return res.status(400).json({message: "Cannot answer a closed poll"})
+            choiceId = parseInt(choiceId, 10);
+            if (choiceId === NaN || choiceId < 0 || choiceId > requestedPoll.choices.length) return res.sendStatus(400).json({message: "choiceId out of Bounds"});
+            if (requestedPoll.choices[choiceId].voters.includes(user.uid)) return res.sendStatus(204);
+
+            try {
+                await PollModel.updateOne(
+                    {'_id': pollId, 'choices.choiceId': choiceId},
+                    {$push: {'choices.$.voters': user.uid}, $inc: {'choices.$.votes': 1}},
+                    {new: true}
+                ).exec();
+                res.sendStatus(204);
+            } catch (e) {
+                console.error(e);
+                return res.sendStatus(500)
+            }
+        } catch (e) {
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+        }
+    },
+
+    close: async function (req, res) {
+        try {
+            let educator = await UserModel.findOne({did: req.session.cas.user}).exec();
+            const {pollId} = req.params;
+            if (!educator || educator.authority !== 'ADMIN') throw new ServerError("only educators can close a poll!", 400)
+            let requestedPoll = await PollModel.findById(pollId).exec();
+
+            if (!requestedPoll) return res.sendStatus(404);
+            if (requestedPoll.creator != educator.uid) return res.sendStatus(403);
+
+            let closedPoll = await PollModel.findByIdAndUpdate(pollId, {status: "closed"}).exec();
+            res.sendStatus(201)
+        } catch (e) {
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+        }
+    },
+
+    retrieveTextPoll: async function (req, res) {
+        PollModel.findOne(
+            {'_id': req.params.pollId, type: "text"},
+            'text_answers',
+            (err, poll) => {
+                if (err) console.error(err);
+                res.json(poll);
+            }
+        );
+    },
+
+    insterText: async function (req, res) {
+        try {
+            const {pollId} = req.params;
+            let user = await UserModel.findOne({did: req.session.cas.user}).exec();
+
+            let requestedPoll = await PollModel.findById(pollId).exec();
+            if (!requestedPoll) return res.sendStatus(404);
+            if (requestedPoll.type == 'choice') return res.status(400).json({message: "Cannot enter text for a choice poll"});
+            if (requestedPoll.status == 'closed') return res.status(400).json({message: "Cannot answer a closed poll"})
+            if (!req.body.answer) return res.status(400).json({message: "No text answer provided"})
+            let dupe = requestedPoll.text_answers.some(async (ans) => {
+                return ans.uid == user.uid;
+            });
+            if (dupe) return res.status(204);
+
+            PollModel.findOneAndUpdate(
+                {'_id': req.params.pollId}, 
+                {$push: {text_answers: {uid: user.uid, answer: req.body.answer}}},
+                {new: true},
+                (err, poll) => {
+                    if (err) {
+                        console.error(err);
+                        res.sendStatus(500);
+                    }
+                    res.json(poll);
+                }
+            )
+        } catch (e) {
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+        }
+    }
+ }

@@ -1,0 +1,8 @@
+const parseDays = (days) => {
+    try{
+        return days.match(/[A-Z][a-z]?/g)
+           
+    } catch (e) {
+        throw new Error("Invalid date character, must be M T W Th F ")
+    }
+}

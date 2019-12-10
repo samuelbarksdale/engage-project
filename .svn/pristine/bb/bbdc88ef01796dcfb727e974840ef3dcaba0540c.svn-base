@@ -1,0 +1,129 @@
+import React, {Component} from 'react'
+import { Button, Card, Table  } from 'react-bootstrap';
+import { Agent } from 'http';
+
+const coursePORT = process.env.COURSE_PORT
+const courseServiceUrl = `http://course:${coursePORT}`;
+
+interface IAttendanceState {
+  students: {uid:any, name:any, dates: string[], absences: string[]}[]
+
+}
+
+class AttendanceTable extends React.Component<any, IAttendanceState> {
+
+  constructor(props:any) {
+    super(props) //since we are extending class Table so we have to use super in order to override Component class constructor
+    this.state = { //state is by default an object
+       students: [
+          { uid: 1, name: 'Wasif', dates: ["10/11", "11/12"], absences: ["10/11", "11/12"] },
+          { uid: 2, name: 'Ali', dates: ["10/11", "11/12"], absences: ["10/11", "11/12"]},
+          { uid: 3, name: 'Saad', dates: ["10/11", "11/12"], absences: ["10/11", "11/12"] },
+          { uid: 4, name: 'Asad', dates: ["10/11", "11/12"], absences: ["10/11", "11/12"] }
+       ]
+    }
+ }
+
+  renderTableData() {
+    return this.state.students.map((student, index) => {
+      const { uid, name, dates, absences} = student //destructuring
+
+      var dateFormatted = "";
+      const dateLength = dates.length;
+      if (dates){
+        dates.map((date:string, index:number) => {
+          dateFormatted += date;
+          if (index + 1 != dateLength){
+            dateFormatted += ", ";
+          }
+        })
+      }
+
+      var absenceFormatted = "";
+      const absenceLength = absences.length;
+      if (absences) {
+        absences.map((absence:string, index:any) => {
+          absenceFormatted += absence;
+          if (index + 1 != absenceLength) {
+            absenceFormatted += ", ";
+          }
+        })
+      }
+
+      return (
+          <tr key={uid}>
+            <td>{uid}</td>
+            <td>{name}</td>
+            <td>{dateFormatted}</td>
+            <td>{absenceFormatted}</td>
+          </tr>
+      )
+    })
+  }
+
+  renderTableHeader() {
+    let header = Object.keys(this.state.students[0])
+    return header.map((key, index) => {
+       return <th key={index}>{key.toUpperCase()}</th>
+    })
+ }
+
+  render() {
+      return (
+        <div>
+            <h1 id='title'>React Dynamic Table</h1>
+            <Table striped bordered hover>
+              <table id='students'>
+                <tbody>
+                  <tr>{this.renderTableHeader()}</tr>
+                  {this.renderTableData()}
+                </tbody>
+              </table>
+            </Table>
+        </div>
+      )
+  }
+
+  // render() {
+  //   return (
+  //       <Table striped bordered hover>
+  //       <thead>
+  //         <tr>
+  //           <th>#</th>
+  //           <th>First Name</th>
+  //           <th>Last Name</th>
+  //           <th>Username</th>
+  //         </tr>
+  //       </thead>
+  //       <tbody>
+  //         <tr>
+  //           <td>1</td>
+  //           <td>Mark</td>
+  //           <td>Otto</td>
+  //           <td>@mdo</td>
+  //         </tr>
+  //         <tr>
+  //           <td>2</td>
+  //           <td>Jacob</td>
+  //           <td>Thornton</td>
+  //           <td>@fat</td>
+  //         </tr>
+  //         <tr>
+  //           <td>3</td>
+  //           <td colSpan={2}>Larry the Bird</td>
+  //           <td>@twitter</td>
+  //         </tr>
+  //       </tbody>
+  //     </Table>
+
+  //       )
+  //   } 
+
+    // componentDidMount() {
+    //   fetch(courseServiceUrl)
+    //     .then(response => response.json())
+    //     .then(data => this.)
+    // }
+}
+
+export default AttendanceTable; 

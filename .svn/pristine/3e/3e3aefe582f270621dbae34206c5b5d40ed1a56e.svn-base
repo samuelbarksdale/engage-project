@@ -1,0 +1,100 @@
+import React from 'react';
+import PollCard from '../components/PollCard'
+import PollForm from '../components/PollForm'
+import { Container, Alert } from 'react-bootstrap';
+import config from '.././config'
+import axios from 'axios'
+import api from '../api';
+
+export default class Pollspage extends React.Component {
+
+    constructor(props) {
+        super(props);
+    
+        this.initialState = {
+            polls: [],
+            alert: {show: false, type: "", message: ""},
+        }
+    
+        this.state = this.initialState;
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.showAlert = this.showAlert.bind(this);
+        this.hideAlert = this.hideAlert.bind(this);
+    }
+
+    async componentDidMount() {
+        
+        try{
+            let result = await api.getPolls();
+            this.setState({polls: result});
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    showAlert(type, message) {
+        this.setState({alert: {show: true, type, message}})
+    }
+    hideAlert() {
+        this.setState({alert: {show: false, type: "", message: ""}})
+    }
+
+    async handleSubmit(newPoll) {
+
+        let currDate = new Date();
+        let options = { weekday: 'long'};
+        let day = new Intl.DateTimeFormat('en-US', options).format(currDate);
+        let fullDate = new Intl.DateTimeFormat('en-US').format(currDate);
+        let dateStr = day + ", " + fullDate;
+      
+        let poll = {
+            question: newPoll.question,
+            type: newPoll.questionType,
+            choices: newPoll.choices,
+            creator: this.props.creator,
+            date: dateStr,
+        }
+  
+        let success = await api.createPoll(poll);
+        if (success) {
+            this.showAlert("success", "Poll successfully created")
+        } else {
+            this.showAlert("danger", "The Poll could not be created")
+        }    
+        
+        this.setState({
+          polls: [...this.state.polls, poll]
+        })
+    }
+
+    render() {
+
+        let list = this.state.polls.map((poll, idx) => {
+            return (<PollCard type={poll.type} question={poll.question} date={poll.date} pollNum={idx}/>)
+        }); 
+    
+        return (
+            <div>
+                {this.state.alert.show && 
+                    <Alert 
+                        variant={this.state.alert.type} 
+                        onClose={this.hideAlert}
+                        dismissible
+                    >
+                        {this.state.alert.message}
+                    </Alert>
+                }
+                <h3 className="text-center mt-4">Polls</h3>
+                <Container>
+                    <h4>Create a New Poll</h4>
+                    <PollForm handleSubmit={this.handleSubmit}/>
+                </Container>
+                
+                <div id="openPolls">
+                    <h4 className="text-center mt-4">Open Polls</h4>
+                    {list}
+                </div>
+            </div>
+        );
+    }
+}

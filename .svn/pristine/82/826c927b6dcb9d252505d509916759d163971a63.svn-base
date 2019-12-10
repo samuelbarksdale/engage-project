@@ -1,0 +1,39 @@
+import React from 'react'
+import axios from 'axios'
+import config from '.././config'
+
+interface IAttendanceState {
+    students: {uid:any, name:any, dates: string[]}[]
+  
+}
+
+export default class Students extends React.Component<any, IAttendanceState> {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            students: []
+        }
+    }
+
+    async componentDidMount() {
+
+        let response = await axios.get("http://localhost:8080/course/cmsc435/students");
+        console.log("response", response);
+
+    }
+
+    render() {
+        return (
+            <div>
+                <h2>Students</h2>
+                {
+                    this.state.students.map(student => {
+                        return student.uid;
+                    })
+                }
+            </div>
+        );
+    }
+
+}

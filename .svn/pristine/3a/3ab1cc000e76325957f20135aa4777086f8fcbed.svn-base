@@ -1,0 +1,26 @@
+I respond to version 1.0 as in the repo this morning. These comments appear purely in the order that the thought occurred to me. Overall it is a very credible first draft, so I'm glad you are all stepping up to the task. As you note, there are some TBD items here, but that is to be expected at this point. We would surely want to get a reaction from Larry before going too far down any path, so when planning out the timeline on effort do please get him looped in. Also, there are some obvious tech areas you'll need to dive in on no matter what, so no harm (and every value) in getting a start on this; don't block waiting on input from either Larry or me any longer than necessary. -- Jim
+
+1. Name the document according to assignment directions. Baking semantics into the name "engageProposal" sort of defeats a purpose of having a CMS, which is what is supposed to keep track of names, versions and so on for us. I know it is engage since I am looking in the engage repository; I'll know it is a latest version (though you will confirm this in version number on the cover page) because it is in the config mgmt system.
+
+2. Turn on page numbering to assist in unambiguous references.
+
+3. It can't hurt to say who you are on a cover page.
+
+4. The depth of subsectioning under 1.0 is a little excessive. Maybe those are placeholders to match the IEEE format that I'd described in class, but remember, that organization was not carving into stone some directive of what you should use, it was sketching out considerations for what you might use to communicate effectively. Three levels of nesting to get to the first real words was a bit much too. Simple is good. Feel free to organize in a way that will sing, not just generate pounds of dry prose.
+
+5. Roles identified in 2.3, possibly it will become useful to break down educators into other classes, since (I think) later there is need to distinguish system administrators (who will manage your system) from those who instruct, and so on.
+
+6. I think there are a number of ordinary administrative routes that likely still need to be added. We dance around them, and maybe they are described here in ways that I didn't pick up on, but management of rosters and class lists needs to be handled in some ways, as will be the entry of or capture of room location for geolocation purposes. (How close is good enough, we will wonder?) Will student users get a listing of their history of absences? (Right now they are offered only a chance to make a new absence declaration, but what they see in this is left open.) Potentially these things would come out more clearly if you were to create lo-fi renderings, as in, fake screen shots with an annotation to show what people would see through a sequence of steps of your code.
+
+7. Regarding the admin CRUD, we can have a conversation if you like about how much of this is needed versus how much is reasonable to do in more awkward manual ways (in loading or managing the database) since it is not the core reason for this tool.
+
+8. In 4.1, " Acceptance testing will be carried out through verification and validation. " Acceptance testing is a validation activity. I bet we will be refactoring how this section is written, or at least substantively it is fair to say what I see here really isn't 'agile'. As acceptance tests go, there are a lot of specifics missing here, and in particular we see no sense of what it takes to pass a test. As plans go, we'd like to see the steps one would take to conduct the AT event(s) during good-to-great week. Or maybe this is partly what I start to see around page (20?).
+
+9. In 7.0, we're not a company (yet anyway), so let's snug up the text to be something more realistic here, and organize it so I can set it up at   https://seam.cs.umd.edu/capstones
+
+10. Potentially there are performance issues you would want to test for. (What is the prospect of being able to smoothly capture attendance in a multi-hundred person class when everyone logs in at once?) What will the system do in the face of degraded services? (Does it all fall apart at once?) What should it do?
+
+11. I miss where we are looking at details of how to set up for other engagement questions or how the instructor might trigger them. Or did this become only an attendance project? Don't we at least have potential of matching this against other data for someone to study relationships between attendance and other classroom indicators?
+
+
+

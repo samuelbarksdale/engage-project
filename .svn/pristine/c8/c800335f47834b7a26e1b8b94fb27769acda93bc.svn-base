@@ -1,0 +1,138 @@
+import React, {Component} from 'react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, ReferenceLine,
+    ReferenceDot, Tooltip, CartesianGrid, Legend, Brush, ErrorBar, AreaChart, Area,
+    Label, LabelList } from 'recharts'
+import api from '../api';
+
+export default class AttendanceGraphs extends React.Component {
+    constructor(props){
+        super(props)
+        const tempDate = new Date();
+        const yesterday = new Date().setTime(1575194204);
+        this.state = {attendance: [
+            // {date: "12/2", totalAmount: 12},
+            // {date: "12/4", totalAmount: 50},
+            // {date: "12/6", totalAmount: 80},
+            // {date: "12/9", totalAmount: 20},
+            // {date: "12/11", totalAmount: 40},
+        ], filter: {}
+        }
+        //this.parseTimeStamps = this.parseTimeStamps.bind(this);
+    }
+    
+    async componentDidMount() {
+        let data = await api.getAttendance();
+        console.log(data);
+
+        // TEMPORARY DATA FOR TESTING
+        let today = new Date ();
+        let yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 2);
+        let anotherDay = new Date();
+        anotherDay.setDate(anotherDay.getDate() - 5);
+        let bloopDay = new Date();
+        bloopDay.setDate(bloopDay.getDate() - 6);
+        let data2 = [
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: today},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: yesterday},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: yesterday},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: yesterday},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: yesterday},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: yesterday},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: anotherDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: anotherDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: anotherDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: anotherDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+            {uid: "sbarksda", classId: "", courseId: "", sectionID: "", timestamp: bloopDay},
+        ]
+
+        // Will temporarily use fake data until we have correct routing of logging attendance
+        // and using that data instead.
+        var dateDict = {}
+        data2.map((record, index) => {
+            // Day of the week dateArray[0]
+            // Month dateArray[1]
+            // Numerical day of the month dateArray[2]
+            // Year dateArray[3]
+            var dateStr = record.timestamp.toDateString() 
+            let dateArray = dateStr.split(" ")
+            //console.log(dateArray)
+            if (dateStr in  dateDict) {
+                dateDict[dateStr] += 1;
+            } else {
+                dateDict[dateStr] = 1;
+            }
+            console.log(dateDict);
+
+        });
+        var newState = []
+        Object.keys(dateDict).map(function(key, index) {
+            const attendanceRecord = {date: key, totalAttended: dateDict[key]}
+            console.log(attendanceRecord)
+            newState.push(attendanceRecord);
+        })
+        console.log(newState);
+        this.setState({attendance: newState});
+        console.log(this.state)
+        
+
+        // this.setState( state => {
+        //     Object.keys(dateDict).map(function(key, index) {
+                
+        //         const attendanceRecord = {date: key, totalAttended: dateDict[key]}
+        //         // this.Settate.attendance.push(attendanceRecord);
+        //         // const add = state.attendance.concat(attendanceRecord);
+        //         super.state.set
+        //     });
+        //     return state
+        // });
+        
+
+        //console.log(info)
+
+    }
+
+    // parseTimeStamps(date){
+    //    console.log(date);
+    //    return date.split(" ")
+    //    //return {day: day, month: month, numberDate: numberDate, year: year}
+
+    // }
+
+    render(){
+        return (
+            <div className='line-charts-wrapper' width="150px">
+                <LineChart width={1100} height={600} data={this.state.attendance}>
+                    <CartesianGrid stroke="#f5f5f5" fill="#e6e6e6" />
+                    <Legend
+                        onMouseEnter={this.handleLegendMouseEnter}
+                        onMouseLeave={this.handleLegendMouseLeave}
+                    />
+                    <XAxis dataKey="date" height={40}>
+                    <Label value="Current Week" position="insideBottom" />
+                    </XAxis>
+                    <YAxis type="number" dataKey="totalAttended" unit="">
+                    <Label value="Amount of Students" position="" angle={-90} />
+                    </YAxis>
+                    <Tooltip />
+                    <Line type="monotone" dataKey="totalAttended" stroke="#8884d8" activeDot={{ r: 8 }} />
+                    
+                </LineChart>
+            </div>
+        )
+    }
+} 

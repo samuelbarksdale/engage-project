@@ -1,0 +1,325 @@
+FORMAT: 1A
+# Polling Service
+
+The Polling Service is an API allowing an educator to create and publish polls which are then viewed and answered by students. 
+This service has a dependency in the Course Service
+
+# Group Poll 
+Resources related towards the poll object in the API
+
+## Polls [/polls]
+
+### List All Polls [GET /polls/{?page}{?state}{?course_id}{?type}]
+
++ Parameters
+    + page: 1 (optional, number) - Specifies the page of polls to view
+    + state: "published" (optional, string) - Specifies the state (published, unpublished) of polls to view
+    + course_id: "cmsc216" (optional, string) - Return polls only belonging to the specified id
+    + type: "text" (optional, string) - Return polls only belonging to the specified category (text, choice)
+
++ Response 200 (application/json)
+
+        {
+            choice: [
+                {
+                    "id": 1,
+                    "course_id": "CMSC132",
+                    "satus": "open",
+                    "creator": "educator uid"
+                    "question": "Do you have any questions about the reading?",
+                    "type": "text",
+                    "text_answers": {
+                        "uid": "student uid",
+                        "answer": "when are they due"
+                    }
+                }
+            ],
+            text: [
+                 {
+                    "id": 2,
+                    "course_d": "CMSC216",
+                    "status": "closed",
+                    "creator": "educator uid", 
+                    "question": "Who shot first?",
+                    "type": "choice",
+                    "choices": [
+                        {
+                            "choice_id": "0",
+                            "choice": "Han",
+                            "votes": 2,
+                            "voters": ["student uid 1", "student uid 2"]
+                        },
+                        {
+                            "choice_id": "1"
+                            "choice": "Gredo",
+                            "votes": 0,
+                        },
+                        {
+                            "choice_id": "2",
+                            "choice": "Both",
+                            "votes": 1,
+                            "voters": ["student uid 3"]
+                        }
+                    ]
+                }
+            ]
+
+        }
+
+### Create a New Poll [POST]
+
+This is an Educator only action. If the poll is of type "chocie", a list of possible choices must be supplied.
+
++ Request (application/json)
+
+        {
+            "question": "Who shot first?",
+            "type": "choice",
+            "creator": "educator uid",
+            "choices": ["Han", "Gredo", "Both"]
+        }
+
++ Response 201 (application/json)
+
+    + Body
+
+            [
+                {
+                    "id": 1,
+                    "question": "Who shot first?",
+                    "type": "choice",
+                    "creator": "educator uid",
+                    "status": "open",
+                    "choices": [
+                        {
+                            "choice_id": "0",
+                            "choice": "Han",
+                            "votes": 0
+                        },
+                        {
+                            "choice_id": "1",
+                            "choice": "Gredo",
+                            "votes": 0,
+                        },
+                        {
+                            "choice_id": "2",
+                            "choice": "Both",
+                            "votes": 0,
+                        }
+                        ]
+                    ]
+                }
+            ]
+
++ Request (application/json)
+
+        {
+            "question": "Do you have any questions on the latest reading?"
+            "type": "text",
+            "creator": "educator uid"
+        }
+
++ Response 201 (application/json)
+
+    + Body
+
+            [
+                {
+                    "id": "2",
+                    "question": "Who shot first?",
+                    "type": "text",
+                    "creator": "educators uid",
+                    "status": "open",
+                    "text_answers": [{
+                        "uid": "student uid",
+                        "answer": ""
+                    }]
+                }
+            ]
+
+## Poll [/polls/{poll_id}]
+
++ Parameters 
+    + poll_id (required, number) - ID of the Poll
+
+### View a specific Poll [GET]
+
++ Response 200 (application/json)
+
+    + Body
+
+            [
+                 {
+                    "id": 2,
+                    "course_d": "CMSC216",
+                    "status": "closed",
+                    "creator": "educator uid", 
+                    "question": "Who shot first?",
+                    "type": "choice",
+                    "choices": [
+                        {
+                            "choice_id": "0",
+                            "choice": "Han",
+                            "votes": 2,
+                            "voters": ["student uid 1", "student uid 2"]
+                        },
+                        {
+                            "choice_id": "1"
+                            "choice": "Gredo",
+                            "votes": 0,
+                        },
+                        {
+                            "choice_id": "2",
+                            "choice": "Both",
+                            "votes": 1,
+                            "voters": ["student uid 3"]
+                        }
+                    ]
+                }
+            ]
+
+### Delete a Poll [DELETE]
+Deletes a poll, specified by the poll's id. Educator only action.
+
++ Response 204
+
+## Poll [/polls/{poll_id}/choices/{choice_id}]
+
++ Parameters
+    + poll_id (required, number) - ID of the Poll
+    + choice_id (required, number) - ID of the choice
+
+### View a specific choice of a Poll [GET]
+
++ Response 200 (application/json)
+
+    + Body
+
+            [
+                {
+                    "choice_id": "0",
+                    "choice": "Han",
+                    "votes": 2,
+                    "voters": ["student uid 1", "student uid 2"]
+                }   
+            ]
+
+
+### Vote for a Choice [PUT]
+
+Adds to the poll specified by poll_id, a user choice_id vote.
+
++ Response 204
+
+## Poll [/polls/{poll_id}/text]
+
++ Parameters
+    + poll_id (required, number) - ID of the Poll
+
+### View a specific free response Poll [GET]
+
++ Response 200 (application/json)
+
+    + Body
+
+            [
+                {
+                    "question" : "What topics would you like to see in the exam review?",
+                    "text_answers": [{
+                        "uid": "student uid",
+                        "answer": "All of them."
+                    },
+                    {
+                        "uid": "student uid",
+                        "answer": "Anything related to hwk 6."
+                    }]
+                }
+            ]
+
+### Enter a free response answer [PUT]
+
+Enter a user's free response answer to a text poll specified by poll_id
+
++ Response 204
+
+## Polls [/polls/courses/{course_id}]
+
++ Parameters
+    + course_id (required, number) -ID of a course
+
+### List all polls in a course [GET]
+
++ Response 200 (application/json)
+
+    + Body
+
+            [
+                {
+                    "id": 2,
+                    "course_d": "CMSC216",
+                    "status": "closed",
+                    "creator": "educator uid", 
+                    "question": "Who shot first?",
+                    "type": "choice",
+                    "choices": [
+                        {
+                            "choice_id": "0",
+                            "choice": "Han",
+                            "votes": 2,
+                            "voters": ["student uid 1", "student uid 2"]
+                        },
+                        {
+                            "choice_id": "1"
+                            "choice": "Gredo",
+                            "votes": 0,
+                        },
+                        {
+                            "choice_id": "2",
+                            "choice": "Both",
+                            "votes": 1,
+                            "voters": ["student uid 3"]
+                        }
+                    ]
+                },
+                {   
+                    "id": 2,
+                    "course_d": "CMSC216",
+                    "status": "closed",
+                    "creator": "educator uid", 
+                    "question": "What topics would you like to see in the exam review?",
+                    "type": "text",
+                    "text_answers": [{
+                        "uid": "student uid",
+                        "answer": "All of them."
+                    },
+                    {
+                        "uid": "student uid",
+                        "answer": "Anything related to hwk 6."
+                    }]
+                }
+            ]
+
+## Polls [/polls/students/{student_id}]
+
++ Parameters
+    + student_id (required, number) - UID of a student
+
+### List all the polls answered by a student [GET]
+Get all the answeres a student has submitted, specified by student_id
+
++ Response 200 (application/json)
+
+    + Body
+
+            [
+                {
+                    "question": "Who shot first?",
+                    "choice_id": "0",
+                    "choice": "Han",
+                    "votes": 2
+                },
+                {
+                    "question": "What topics would you like to see in the exam review?",
+                    "answer": "Anything related to hwk 6."
+                }
+            ]

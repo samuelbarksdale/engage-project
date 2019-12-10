@@ -1,0 +1,24 @@
+import React from 'react'
+import { Button, Card } from 'react-bootstrap';
+import api from '../api'
+
+
+ const CourseCard = (props) =>  {
+    const deleteCourse = (event) => {
+      event.preventDefault();
+      
+    }
+
+    return (  
+      <Card style={{ width: '13rem' }}>
+        <Card.Body>
+          <Card.Title>{props.lectureName}</Card.Title>
+          {/* <Button onClick={deleteCourse}>Delete Course</Button> */}
+        </Card.Body>
+      </Card>
+  )
+
+  
+} 
+
+export default CourseCard

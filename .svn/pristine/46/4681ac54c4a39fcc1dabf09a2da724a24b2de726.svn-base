@@ -1,0 +1,353 @@
+import {ICourse, IAbsence, ISection, IScheduleMeeting, IUser, IPollQuestion} from '../common/model-definitions'
+import {action, computed, observable, observe, runInAction} from "mobx";
+import config from "../config"
+import {IEducator} from "../common/model-definitions/User";
+
+
+const course_data: Record<string, ICourse> = {
+    1: {
+        "id": 'CMSC435',
+        "educators": ["jpurtillo", "araveesh"],
+        "semester": "Fall2019",
+        "topics": [
+            {date: new Date('2019-11-19'), topicsCovered: ["Intellectual Property", "Lab"]}, {
+                date: new Date('2019-11-22'),
+                topicsCovered: ["CDR"]
+            }],
+        "sections": ['10', '11'],
+        schedule: null
+    },
+    2: {
+        "id": "CMSC425",
+        "educators": ["araveesh"],
+        "semester": "Spring2019",
+        "topics": [
+            {date: new Date('2019-11-19'), topicsCovered: ["Intellectual Property", "Lab"]}, {
+                date: new Date('2019-11-22'),
+                topicsCovered: ["CDR"]
+            }],
+        "sections": ['10', '11'],
+        schedule: null
+    }
+};
+
+const section_data: Record<string, ISection> = {
+    section0101: {
+        "_id": '10',
+        "name": "0101",
+        "ta": ["araveesh"],
+        "roster": ["mskopic", "nendy"],
+        "schedule": ['100', '200'],
+    },
+    section0110: {
+        "_id": '11',
+        "name": "0110",
+        "ta": ["araveesh"],
+        "roster": ["aravi"],
+        "schedule": ['100'],
+    }
+
+};
+
+const schedule_meeting_data: Record<string, IScheduleMeeting> = {}
+// {
+//     '100': {
+//         _id: '100',
+//         type: 1, //ClassTypeEnum
+//         days: [2, 4], //DayEnum
+//         start: 14.0,
+//         end: 15.25,
+//         location: {
+//             lat: 38.990104,
+//             long: -76.936399,
+//             radius:5
+//         }
+//     },
+//     '200': {
+//         _id: '200',
+//         type: 2, //ClassTypeEnum
+//         days: [5], //DayEnum
+//         timeStart: 12.5,
+//         timeEnd: 13.75,
+//         location: {
+//             lat: 38.990104,
+//             long: -76.936399,
+//             radius: 10
+//         }
+//     }
+// }
+;
+
+
+export enum EStoreState {
+    'loading',
+    'ready',
+    'error',
+    'init'
+}
+
+export class createStore {
+    @observable currentUser: IUser = null;
+    @observable courses = new Map<string, ICourse>();
+    @observable sections = new Map<string, ISection>();
+    @observable scheduleMeetings = new Map<string, IScheduleMeeting>();
+    @observable polls = new Map<string, IPollQuestion>();
+    @observable absences = new Map<string, IAbsence>();
+    @observable errorMessage = "";
+
+    constructor() {
+        this.init();
+    }
+
+    @observable private _storeState: EStoreState = EStoreState.init;
+
+    get storeState(): EStoreState {
+        return this._storeState;
+    }
+
+    set storeState(value: EStoreState) {
+        if (value != EStoreState.init) {
+            this._storeState = value;
+        }
+    }
+
+    get isLoggedIn(): boolean {
+        return this.currentUser != null;
+    }
+
+    get coursesList() {
+        return Array.from(this.courses.values());
+    }
+
+    @action
+    finishInit() {
+        this._storeState = EStoreState.ready;
+    }
+
+    @action
+    async loadCourse() {
+        this.storeState = EStoreState.loading;
+        let data = course_data;
+
+        try{
+
+            let response= await (await fetch(config.courseURL + "/course", {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+
+                }
+            })).json();
+
+
+
+        } catch (err) {
+            this.storeState = EStoreState.error;
+            this.errorMessage = err.message;
+            console.error(err);
+            throw (err);
+        }
+
+        runInAction((() => {
+
+            Object.keys(data).map(k => {
+                this.courses.set(k, data[k])
+            });
+            this.storeState = EStoreState.ready;
+        }));
+    }
+
+    @action
+    async loadCourses() {
+        this.storeState = EStoreState.loading;
+        let data = course_data;
+
+        console.log("here trying to fetch data from localhost data");
+        try {
+            data = await (await fetch('http://localhost:8080/courses', {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+
+                }
+            })).json();
+
+
+
+        } catch (err) {
+            this.storeState = EStoreState.error;
+            this.errorMessage = err.message;
+            console.error(err);
+            throw (err);
+        }
+
+        runInAction((() => {
+
+            Object.keys(data).map(k => {
+                this.courses.set(k, data[k])
+            });
+            this.storeState = EStoreState.ready;
+        }));
+    }
+
+    @action
+    async loadPolls() {
+        this.storeState = EStoreState.loading;
+                console.log("here trying to fetch data from localhost data");
+        let response:IPollQuestion[];
+        try {
+            response= await (await fetch(config.pollingURL + '/polls', {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+
+                }
+            })).json();
+
+        } catch (err) {
+            this.storeState = EStoreState.error;
+            this.errorMessage = err.message;
+            console.error(err);
+            throw (err);
+        }
+
+        runInAction((() => {
+            response.map(k => {
+                this.polls.set(k._id, k)
+            });
+            this.storeState = EStoreState.ready;
+        }));
+    }
+
+    @action
+    async loadSections() {
+        this.storeState = EStoreState.loading;
+        runInAction(() => {
+            Object.keys(section_data).map(k => {
+                this.sections.set(k, section_data[k])
+            });
+            this.storeState = EStoreState.ready;
+        });
+    }
+
+    @action
+    async loadScheduleMeetings() {
+        this.storeState = EStoreState.loading;
+        runInAction((() => {
+            const data = schedule_meeting_data;
+
+            Object.keys(data).map(k => {
+                this.scheduleMeetings.set(k, data[k])
+            });
+            this.storeState = EStoreState.ready;
+        }));
+    }
+
+    @action
+    async init() {
+        this.storeState = EStoreState.init;
+        await this.loadCourses();
+        await this.loadSections();
+        await this.loadScheduleMeetings();
+        this.finishInit();
+    }
+
+    @action
+    async deleteCourse(
+        id: ICourse['id']
+    ) {
+        this.storeState = EStoreState.loading;
+        console.log("attempting to delete course");
+        let params = {
+            id
+        };
+
+        alert(JSON.stringify(params));
+        let response: ICourse;
+        try {
+            response = await (await fetch(config.courseURL + '/courses/' + id, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            })
+        ).json()
+        } catch (err) {
+            this.storeState = EStoreState.error;
+            this.errorMessage = err.message;
+            console.error(err);
+            throw(err);
+        }
+
+        runInAction((() => {
+            this.courses.set(response.id, response);
+            this.storeState = EStoreState.ready;
+        }));
+
+    }
+
+    @action
+    async insertCourse(
+        id: ICourse['id'],
+        educators: ICourse['educators'],
+        semester: ICourse['semester'],
+        topics: ICourse['topics'],
+        sections: ICourse['sections'],
+        schedule: ICourse['schedule']
+    ) {
+        this.storeState = EStoreState.loading;
+        console.log("here attempting to post the information");
+
+
+        let postObject = {
+            id,
+            educators,
+            sections,
+            topics,
+            schedule,
+            semester
+        };
+
+        alert(JSON.stringify(postObject));
+
+        let response;
+        try {
+            response = (await fetch('http://localhost:8080/courses', {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(postObject),
+                })
+            ).json()
+        } catch (err) {
+            this.storeState = EStoreState.error;
+            this.errorMessage = err.message     ;
+            console.error(err);
+            throw (err);
+        }
+
+        runInAction((() => {
+            this.courses.set(response.id, response);
+            this.storeState = EStoreState.ready;
+        }));
+    }
+
+    @action
+    logIn(uid: IUser['uid']) {
+        this.currentUser = {
+            uid
+        }
+    }
+
+    @action
+    logOut(uid: IUser['uid']) {
+        this.currentUser = null;
+    }
+}

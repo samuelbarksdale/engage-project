@@ -1,0 +1,118 @@
+import React from 'react';
+import {Form, Button, Col, Container} from 'react-bootstrap'
+import CSVReader from "react-csv-reader";
+import LectureDisplay from "./LectureDisplay";
+import LectureForm from './LectureForm';
+import api from '../api';
+import parseDays from '../utils';
+export default class CourseForm extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {lectures: [], sections: [], roster: [], courseName: "", tas: ""}
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleLecturesUpload = this.handleLecturesUpload.bind(this);
+        this.handleRosterUpload = this.handleRosterUpload.bind(this);
+        this.handleSectionsUpload = this.handleSectionsUpload.bind(this);
+    }
+
+    async handleUpdate() {
+        try {
+            if (this.state.roster.length == 0) return this.props.showAlert("warning", "Roster cannot be empty");
+
+            let re = /[A-Z][a-z]?/g
+            let newSections = this.state.sections.map(s => {
+                let {section, days, ...rest} = s;
+                let daysArr = parseDays(days) 
+                if (daysArr) return {...rest, days: daysArr, sectionId: section}
+                return;
+            })
+            let newLectures = this.state.lectures.map(l =>{
+                let {days, ...rest} = l;
+                let daysArr = parseDays(days)
+                if (daysArr) return {...rest, days: daysArr}
+                return;
+            })
+            let course = {
+                courseName: this.state.courseName.toLowerCase(),
+                roster: this.state.roster,
+                lectures: newLectures,
+                sections: newSections,
+                tas: this.state.tas.replace(' ', '').split(',')
+            }
+            let success = await api.updateCourse(course);
+            if (success) {
+                this.props.showAlert("success", "Course successfully updated")
+            } else {
+                this.props.showAlert("danger", "The Course could not be updated")
+            }
+        } catch(e) {
+            this.props.showAlert("danger", e.message)
+        }
+        
+    }
+
+    // handleSaveLecture(lecture) {
+    //     this.setState({lectures: this.state.lectures.concat(lecture)});
+    // }
+    // handleRemoveLecture(lectureName) {
+    //     let removeIdx = this.state.lectures.findIndex(l => l.lectureName === lectureName);
+    //     this.setState({lectures: this.state.lectures.slice(0, removeIdx).concat(this.state.lectures.slice(removeIdx+1))})
+    // }
+
+    handleRosterUpload(data) {
+        this.setState({roster: data});
+    }
+
+    handleSectionsUpload(data) {
+        this.setState({sections: data})
+    }
+
+    handleLecturesUpload(data) {
+        this.setState({lectures: data})
+    }
+
+    render() {
+        const options = {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+        }
+        return  (
+            <Container>
+            <h4>{this.props.course.courseName}</h4>
+            <table>
+                <tr>
+                    <th>Roster</th>
+                    <th>Lectures</th>
+                    <th>Sections</th>
+                </tr>
+                <tr>
+                    <td>
+                        <CSVReader
+                            onFileLoaded={this.handleRosterUpload}
+                            parserOptions={options}
+                        />
+                    </td>
+                    <td>
+                        <CSVReader
+                            onFileLoaded={this.handleLecturesUpload}
+                            parserOptions={options}
+                        />
+                    </td>
+                    <td>
+                        <CSVReader
+                            onFileLoaded={this.handleSectionsUpload}
+                            parserOptions={options}
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <Button onClick={this.handleUpdate} style={{marginTop: "10px", background: "#990000", borderColor: "#990000"}}  size="md">Update Course</Button>
+                    </td>
+                </tr>
+            </table>
+            </Container>
+        )
+    }
+}

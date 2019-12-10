@@ -1,0 +1,34 @@
+
+const distance = (lat1, lng1, lat2, lng2) => {
+    const toRadians = (f) => {
+        return f * (Math.PI/180)
+    }
+    let R = 6371e3; // meters
+    lat1 = toRadians(lat1);
+    lat2 = toRadians(lat2);
+    lng1 = toRadians(lng1);
+    lng2  = toRadians(lng2);
+
+    let phi = toRadians((lat2-lat1));
+    let lam = toRadians((lng2-lng1));
+    let a = Math.sin(phi/2) * Math.sin(phi/2) +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(lam/2) * Math.sin(lam/2);
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    let d = R * c;
+    return d;
+}
+
+const parseTime = (time:string) => {
+    let re = /^(\d\d):(\d\d)$/
+    let res = time.match(re);
+    return stdTime(res[1], res[2]);
+}
+
+const stdTime = (hour:number, min:number) => {
+    let std = new Date(70, 0, 1);
+    std.setHours(hour, min);
+    return std.getTime();
+}
+
+export {distance, stdTime, parseTime};

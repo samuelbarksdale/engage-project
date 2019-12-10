@@ -1,0 +1,20 @@
+import React, { Component } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Card } from 'react-native-material-ui';
+
+
+/**
+ * @props
+ * title - Title that goes in card header
+ */
+class EventCard extends Component {
+  render() {
+    return (
+      <Card style={{container: {height: 500, width: 500, alignSelf: 'stretch'}}}>
+        <Text>{this.props.cardTitle}</Text>
+      </Card>
+    );
+  }
+}
+
+export default EventCard;

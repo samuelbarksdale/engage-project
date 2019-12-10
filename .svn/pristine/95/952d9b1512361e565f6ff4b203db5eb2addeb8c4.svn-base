@@ -1,0 +1,57 @@
+import express from 'express';
+import MongoClient from 'mongodb';
+import Routes from './routes'
+import session from 'express-session'
+import https from 'https'
+import fs from 'fs'
+import path from 'path'
+
+const mongoUrl = "mongodb://mongo:27017"
+const dbName = "store";
+const port = 8080;
+const app = express();
+// middleware and authentication
+app.use(express.json())
+let routes;
+let ctx;
+
+const option = {
+    key: fs.readFileSync(path.join(__dirname, 'ssl', "server.key")),
+    cert: fs.readFileSync(path.join(__dirname, 'ssl', "server.crt"))
+}
+
+
+app.use( session( {
+    secret: 'super secret key',
+    resave: false,
+    saveUninitialized: true
+
+}))
+
+
+connectToDatabase(mongoUrl).then((db) => {
+    ctx = {...ctx, db}
+    routes = Routes(app, ctx);
+    app.listen(port, (err) => {
+        if (err) console.error(err);
+        console.log(`Server listening on port ${port}`);
+    })
+    // https.createServer(option, app).listen(8080, (err) => {
+    //     if (err) console.error(err);
+    //     console.log(`Server listening on port 3443`);
+    // })
+}).catch(err => console.error(err))
+
+    
+
+
+async function connectToDatabase(url) {
+    try{
+        const client = await new MongoClient(url, {autoReconnect: true, useNewUrlParser: true});
+        let db =  client.db("store");
+        return Promise.resolve(db)
+    } catch (e){
+        console.error("Failed to connect to the mongodb instance")
+        return Promise.reject(e)
+    } 
+}

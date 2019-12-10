@@ -1,0 +1,35 @@
+import axios from 'axios';
+import config from './config.js';
+
+async function getUser(did) {
+    let res = await axios.get(config.backendUrl + "/user/"+ did);
+    if (res.status < 300) {
+        return res.data;
+    }
+}
+
+async function getMe() {
+    let res = await axios.get(config.backendUrl + "/me");
+    return res.data;
+}
+
+async function getMyClasses() {
+    let res = await axios.get(config.backendUrl + "/me/classes");
+    console.log(res)
+    if (res.status < 300) return res.data;
+    else console.log(res.data.message)
+}
+
+async function createCourse(body) {
+    let res = await axios.post(config.backendUrl + "/classes", body);
+    if (res.status < 300) return true;
+    console.log(res.data.message)
+}
+
+async function getAttendance() {
+    let res = await axios.get(config.backendUrl + "/attendance");
+    if (res.status < 300) return res.data;
+    return false
+}
+
+export default {getUser, getMe, createCourse, getAttendance, getMyClasses}

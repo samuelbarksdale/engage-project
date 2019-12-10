@@ -1,0 +1,50 @@
+import React from 'react';
+import {Button, Spinner} from 'react-bootstrap'
+export default class GeolocationButton extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {loading: false}
+        this.GetGeolocation = this.GetGeolocation.bind(this);
+    }
+
+    GetGeolocation() {
+        const geo = navigator.geolocation;
+
+        if (!geo) {
+           throw new Error("Geolocation not supported!")
+        }
+
+        geo.getCurrentPosition((Position) => {
+            this.setState({loading: false})
+            document.getElementById("geolocate").removeAttribute("disabled")
+            this.props.locationCallback(Position.coords)
+        }, (error) => {
+            this.setState({loading: false})
+            console.error(error);
+        });
+    }
+
+    render() {
+        return (
+            <div>
+                <Button 
+                    id="geolocate"
+                    size="sm" 
+                    onClick={() => {
+                        document.getElementById("geolocate").setAttribute("disabled", "true")
+                        this.setState({loading: true})
+                        this.GetGeolocation()
+                    }}
+                >
+                    {
+                        this.state.loading 
+                        ? [<Spinner key={1} as="span" role="status" size="sm" animiation="border" />, <span key={2}>Loading...</span>]
+                        : <span>Use Current Location</span>
+                    }
+                </Button>
+                <p>Note: A GPS equipped device is necessary for accurate results. Otherwise, use coordinates given by <a href="https://maps.google.com">Google Maps</a> when clicking on a building.</p>
+            </div>  
+        ); 
+    }
+   
+};

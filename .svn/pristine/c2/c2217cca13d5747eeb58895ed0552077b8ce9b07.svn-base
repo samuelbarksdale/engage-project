@@ -1,0 +1,44 @@
+import axios from 'axios'
+import config from './config'
+const getUser = async (uid) => {
+    const endpoint = `/users/${uid}`;
+    try {
+        let user = await axios.get(config.courseServiceUrl + endpoint);
+        return user.data;
+    } catch (e) {
+        if(e.response.status === 404) throw new Error("The uid does not refer to an existing user");
+        throw new Error("Internal Server Error")
+    }
+}
+
+const isEducator = async (uid, user={}) => {
+    if (Object.keys(user).length === 0) {
+        user = await getUser(uid);
+    }
+        
+    return user.type === 2;
+}
+
+
+
+const distance = (lat1, lng1, lat2, lng2) => {
+    const toRadians = (f) => {
+        return f * (Math.PI/180)
+    }
+    let R = 6371e3; // meters
+    lat1 = toRadians(lat1);
+    lat2 = toRadians(lat2);
+    lng1 = toRadians(lng1);
+    lng2  = toRadians(lng2);
+
+    let phi = toRadians((lat2-lat1));
+    let lam = toRadians((lng2-lng1));
+    let a = Math.sin(phi/2) * Math.sin(phi/2) +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(lam/2) * Math.sin(lam/2);
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    let d = R * c;
+    return d;
+}
+
+export {distance, isEducator, getUser};

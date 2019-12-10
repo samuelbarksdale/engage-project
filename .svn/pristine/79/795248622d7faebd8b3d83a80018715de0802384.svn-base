@@ -1,0 +1,85 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+
+//comment to test svn
+
+const app = express();
+const port = 8080;
+
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+
+mongoose
+	.connect(
+        'mongodb://mongo:27017/course-service',
+        { useNewUrlParser: true}
+    )
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.log(err));
+var db = mongoose.connection;
+/*db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  // we're connected!
+});*/
+
+//User Service Definitions
+var userSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    name: String,
+    uid: String,
+    type: String, //student, educator
+    classesCurrent: [String],
+    classesPast: [String],
+    connected: Boolean
+});
+var User = mongoose.model('User', userSchema);
+//var newId2 = new mongoose.mongo.ObjectId(); //how to create a new id
+
+app.get('/', (req, res) => {
+    res.send("Hello, from the course and user service!")
+})
+
+app.post('/users', (req, res) => {
+    console.log("received new user: " + req.body.name + ", uid: " + req.body.uid)
+    var newId = new mongoose.mongo.ObjectId('123456789ABCDEFFAAAABBBC');//for testing only, will be ObjectId()
+    var newUser = new User({
+        _id: newId,
+        name: req.body.name,
+        uid: req.body.uid
+    });
+    newUser.save(function (err, newUser) {
+        if (err) return console.error(err);
+        console.log("Saved " + req.body.uid + " with id " + newId.toString());
+    });
+    res.send(JSON.stringify(newUser));
+})
+
+app.get('/users/:_id', (req, res) => {
+    console.log("_id: " + req.params._id);
+    User.findOne({'_id': req.params._id}, function(err, user) {
+        if (err) return console.error(err);
+        return res.send(JSON.stringify(user))
+    })
+})
+
+
+
+
+app.post('/courses', (req, res) => {
+    console.log("received a new course")
+	res.send("You have reached the course endpoint")
+})
+
+app.get('/courses', (req, res) => {
+	res.send("You have reached the course endpoint")
+})
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.error(err)
+    }
+    return console.log(`Server listening on port ${port}`);
+})

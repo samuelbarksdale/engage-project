@@ -1,0 +1,85 @@
+Cover Page
+
+ 
+
+ 
+
+
+
+
+
+ 
+
+# 1.   EXECUTIVE SUMMARY/INTRODUCTION
+
+One paragraph explaining this entire document. Generates interest and our authority to be speaking on this topic
+
+# 2.  TECHNICAL SOLUTION
+
+Our outlined solution which agrees with the Success Metrics, has concrete evidence for its future success (lo-fi renderings), fits within the scope of this class (time, personnel, computing resources), and has well defined MVP
+
+## 2.1     Problem Statement
+
+What is the problem we are trying to solve? Who for? Why is it significant?
+
+## 2.2     Solution
+
+Actual solution. Include enough detail to show we have a legitimate plan, but not so much that it drags and confuses. Touch on computing resources required. Include information about how it will be used.
+
+### 2.2.1               Lo-fi Renderings (or code)
+
+Project description says teams that fail do not have lo-fi renderings or basic code examples.
+
+## 2.3     Team Management
+
+How we will organize to reach the timeline specified below. Which teams will we have? What are they responsible for? How will we work in parallel?
+
+## 2.4     Timeline
+
+What is our timeline to finish the project in the scope of the semester? What deliverables will we finish when? How will we handle taking on new features (in addition to the attendance task?)
+
+From Purtillo: We will want you to call out at least the major tasks, story lines or activities necessary to complete your project, and show how composing them should lead to success. Then, as you proceed with the build, we will want you to maintain (e.g. on one of your groups' web sites) a graphic summary of the status of completion, so we can track progress. Are you getting closer or further away from success? The 'manager' will want to know at a glance. (We will talk more in class about a variety of tools for this, such as JIRA or Trello. We hope you will come to see such tools as aids to success, not busywork or barriers. Learn to use these to improve your productivity.) The cost estimate should be consistent with the timeline; potentially you will reflect on how to create a Gantt chart
+
+### 2.4.1               Delivery Manifest
+
+This is basically a checklist to summarize clearly what we're getting and how we will know we got it. It is used at delivery to, well, check that we got what you promised
+
+## 2.5     Alternate Solutions
+
+There are two great ways to ensure your green light process is painful, drawn out, complex and jam packed with frustration. One is to submit a proposal that does not include analysis of alternate design approaches with an explanation as to why one has been chosen in particular.
+
+# 3              TESTING
+
+How will we test our product to prove that it fulfills the needs of the client and professor?
+
+## 3.1     Success Metrics
+
+List of non-conflicting tests that the product must perform in order to qualify as a ‘success’. Must be aligned with both Purtillo’s and Larry’s definition of ‘success’.
+
+## 3.2     Test Plan
+
+Matched with the timeline. How we will test along the way to ensure we are meeting the timeline goals to the highest quality possible.
+
+## 3.3     Acceptance Testing (w/ Larry)
+
+ 
+
+# 4              COST ESTIMATE
+
+Make sure you have a clear and supported prediction of what it will take to get you from the point of the green light approval to the walk through (i.e. when the build is done.) To be clear: this is not an invitation to guess. We don't want your opinion; we want a value that anyone would derive by using the same prediction method and model of your solution. The chief result we look for is prediction in hours. Show us you can research various prediction methods which might be named in our supporting class materials, and then apply them here. This component of your submission should be sufficient to support its use later in the second half of a cost exercise, where you report how much effort the project did take, and then explain why they are the same or different. Presumably you would not want to submit a green light proposal with a cost estimate which predicts there isn't enough time left available to actually do the job, or give a plan which predicts peak burn rates might occur at times when you are heavily conflicted with other course or life obligations.
+
+**Note**: Actual Costs might be the best estimate method for us. We can base our costs based on the small-scale tasks completed in the Scrimmage. Maybe multiply by a seriousness factor (need higher quality product than scrim)
+
+-Parametric relies on knowing many different factors which we may not understand. Used mostly in huge projects such as NASA projects
+
+-Analogous is also a strong option, but we would need to know how TopHat developed and their costs.
+
+# 5              IP STATEMENT
+
+Make clear expectations for ownership or restrictions on this product (which thus includes understanding what limits are placed on components you rely upon in your build.) Note carefully how this information will affect your process. For example, data which are proprietary to the customer would not be something you could or would leave for team members in an open dropbox.
+
+# 6              PROJECT ADVERTISEMENT
+
+At final delivery we will want a description of the project suitable for showing what 435 students do in the class. Thus, make sure your project proposal reflects a plan for getting the advertisement ready. To be clear: **at proposal time we are not asking for a web site, we are asking for you to show you have planned to get a site ready and also incorporated this activity into your cost estimate**. What we need at the project approval time is a press release that could be used to announce your project. (Yes, this is one of the more important planning tools, as we will discuss in class.) Remember: The advertisement material may not necessarily be the same as what you ship for a final project site, depending on your task. It is a formulation that fits into our server; preparing content on the assumption that you are free to stand up content on your favorite Erlang-on-rails engine might result in you being unpleasantly surprised later
+
+Note: website with Log-in and Sign Up links (student and professor). Website will be mostly advertising what we provide. Actual app will be after log-in

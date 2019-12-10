@@ -1,0 +1,78 @@
+import React from 'react';
+import { Button, Card} from 'react-bootstrap';
+import {
+    BrowserRouter as Router,
+    Link,
+    useLocation,
+    Switch, 
+    Route
+  } from "react-router-dom";
+  //import email from 'react-native-email';
+
+  const APPROVAL_SUBJECT_TEXT = "Your request has been approved"; 
+  const DENIAL_SUBJECT_TEXT = "Your request has been denied"; 
+
+  const APPROVAL_BODY_TEXT = "Your request has been approved"; 
+  const DENIAL_BODY_TEXT = "Your request has been approved"; 
+
+
+
+  export default class AbsenceCard extends React.Component {
+    
+    // sendEmail(subject, body){
+
+    //   const to = [this.props.email] // string or array of email addresses
+    //     email(to, {
+    //         // Optional additional arguments
+    //         subject: subject,
+    //         body: body
+    //     }).catch(console.error)
+
+    // }
+
+    // handleApprove(){
+
+    //   this.sendEmail(APPROVAL_SUBJECT_TEXT, APPROVAL_BODY_TEXT); 
+    // }
+
+    // handleReject(){
+    //   this.sendEmail(DENIAL_SUBJECT_TEXT, DENIAL_BODY_TEXT); 
+    // }
+    
+    // handleCustom(){
+    //   this.sendEmail("",""); 
+    // }
+   
+    
+    render() {
+       
+         return (
+                <div>    
+                <Card >
+                <Card.Body>
+                <Card.Title>{this.props.section_id}</Card.Title>
+                    <h3>{this.props.uid}</h3>
+                    <h4>{this.props.type}</h4>
+                    <h4>{this.props.rationale}</h4>
+                    <h4>{this.props.email}</h4>
+                <Button> Approve</Button>
+                <Button >Deny</Button>
+                <Button >Custom</Button>
+                </Card.Body>
+                </Card>
+
+                </div>
+             )
+    }
+   
+//   <div>
+//   <h1>Testing</h1>
+// </div>
+// <div className="cart">
+//  <button className="btn btn-block" onClick={this.toggle.bind(this)}>
+//                       Open/close
+//  </button>
+//  </div>
+  
+} 
+

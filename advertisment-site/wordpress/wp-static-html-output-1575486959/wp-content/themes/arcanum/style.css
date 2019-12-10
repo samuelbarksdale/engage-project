@@ -1,0 +1,23 @@
+#site-title a {padding: 5px 10px 5px 15px;border-radius: 100px;}
+.continue-reading-link span {text-transform: none;}
+article.hentry .post-thumbnail-container {border-radius: 6px;}
+body:not(.single) .entry-meta > span {letter-spacing: 0;}
+body .main #content-masonry .post-thumbnail-container span.bl_categ a, body .main #content-masonry .post-thumbnail-container span.bl_categ .sep {font-size: .8em;}
+body .main #content-masonry .post-thumbnail-container span.bl_categ {letter-spacing: 1px;}
+#container:not(.esotera-landing-page) .main {border-radius: 8px;}
+.main #content-masonry .post-thumbnail-container + .entry-after-image {border-radius: 4px 4px 0 0;}
+.comment .reply {text-transform: none;font-weight: bold;}
+.comment .reply a {letter-spacing: 0;}
+.commentlist .comment-body {border-radius: 12px;}
+.comment-form-author input, .comment-form-email input, .comment-form-url input, .comment-form-comment textarea {text-transform: uppercase;font-size: .9em;border-radius: 12px;}
+span.entry-sticky {padding: .3em 1em;border-radius: 100px;}
+.sidey .widget-container ul li:not(:last-child) {border: 0;}
+.widget-title::after, #comments-title::after, #reply-title::after, .related-posts .related-main-title::after {height: 4px;width: 55px;}
+.esotera-normalizedtags #content .tagcloud a {font-size: .9em !important;text-transform: none;}
+.footermenu ul li {font-size: .9em;}
+.lp-staticslider .staticslider-caption-text, .seriousslider-theme .seriousslider-caption-text {letter-spacing: 0;font-size: 1.1em;}
+a.staticslider-button, .seriousslider-theme .seriousslider-caption-buttons a.seriousslider-button {font-size: 1em;}
+.lp-box-readmore::before {-webkit-transition: .5s ease-out all;transition: .5s ease-out all;}
+.lp-section-header .lp-section-title::after, .main .lp-text-title::after {height: 4px;}
+.lp-boxes-static .lp-box-content::before {display: none;}
+.lp-boxes-animated .box-overlay {display: none;}

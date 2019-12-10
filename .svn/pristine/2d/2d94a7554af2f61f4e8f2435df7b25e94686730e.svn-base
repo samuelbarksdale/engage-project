@@ -1,0 +1,264 @@
+import mongoose from 'mongoose';
+import {UserModel} from "../schemas/userSchema";
+import { LectureModel } from '../schemas/classSchema';
+import { AttendanceModel } from '../schemas/attendSchema';
+import { AbsenceModel } from '../schemas/absenceSchema';
+
+export default {
+    seederUAT: async function (req, res) {
+        let today = new Date ();
+        let anotherDay = new Date();
+        anotherDay.setDate(anotherDay.getDate() - 4);
+        let randomDay = new Date();
+        randomDay.setDate(randomDay.getDate() - 8);
+
+        var objList = [];
+
+        let att1 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: today
+        })
+        await att1.save();
+
+        objList.push(att1);
+
+        let att2 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: today
+        })
+        await att2.save();
+        objList.push(att2);
+        
+        let att3 = new AttendanceModel({
+            did: "bischoff",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: today
+        })
+        await att3.save();
+        objList.push(att3);
+
+
+        let att4 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: today
+        })
+        await att4.save();
+        objList.push(att4);
+
+        let att5 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: today
+        })
+        await att5.save();
+        objList.push(att5);
+        
+        let att6 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: today
+        })
+        await att6.save();
+        objList.push(att6);
+
+        let att7 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: anotherDay 
+        })
+        await att7.save();
+        objList.push(att7);
+
+        let att8 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: anotherDay 
+        })
+        await att8.save();
+        objList.push(att8);
+        
+        let att9 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: anotherDay 
+        })
+        await att9.save();
+        objList.push(att9);
+
+        let att10 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: anotherDay 
+        })
+        await att10.save();
+        objList.push(att10);
+
+        let att11 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: anotherDay 
+        })
+        await att11.save();
+        objList.push(att11);
+
+        
+        let att12 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: anotherDay 
+        })
+        await att12.save();
+        objList.push(att12);
+        
+        let att13 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: randomDay 
+        })
+        await att13.save();
+        objList.push(att13);
+
+        let att14 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: randomDay.setDate(randomDay.getDate() - 12) 
+        })
+        await att14.save();
+        objList.push(att14);
+
+        let att15 = new AttendanceModel({
+            did: "sbarksda",
+            lectureName: "CMSC132-1",
+            courseName: "CMSC132",
+            sectionId: "CMSC132-0101",
+            timestamp: randomDay.setDate(randomDay.getDate() - 20)
+        })
+        await att15.save();
+        objList.push(att15);
+
+        let att16 = new AttendanceModel({
+            did: "bischoff",
+            lectureName: "CMSC216-1",
+            courseName: "CMSC216",
+            sectionId: "CMSC216-0101",
+            timestamp: randomDay.setDate(randomDay.getDate() - 15) 
+        })
+        await att16.save();
+        objList.push(att16);
+
+        let att17 = new AttendanceModel({
+            did: "bischoff",
+            lectureName: "CMSC216-1",
+            courseName: "CMSC216",
+            sectionId: "CMSC216-0101",
+            timestamp: randomDay.setDate(randomDay.getDate() - 10)
+        })
+        await att17.save();
+        objList.push(att16);
+
+        let abs1 = new AbsenceModel({
+            files: [],
+            uid: "sbarksda",
+            section_id: "CMSC132-0101",
+            missed_days: {start: "2019-11-26", end: "2019-11-26"},
+            type: "illness",
+            rationale: "Caffeine overdose",
+            email: "sbarksda@umd.edu"
+        })
+        await abs1.save();
+        objList.push(abs1);
+
+        let abs2 = new AbsenceModel({
+            files: [],
+            uid: "jack",
+            section_id: "CMSC132-0101",
+            missed_days: {start: "2019-11-26", end: "2019-11-26"},
+            type: "illness",
+            rationale: "Caffeine overdose",
+            email: "sbarksda@umd.edu"
+        })
+        await abs2.save();
+        objList.push(abs1);
+
+        let abs3 = new AbsenceModel({
+            files: [],
+            uid: "esteban",
+            section_id: "CMSC132-0101",
+            missed_days: {start: "2019-11-26", end: "2019-11-26"},
+            type: "illness",
+            rationale: "Caffeine overdose",
+            email: "sbarksda@umd.edu"
+        })
+        await abs3.save();
+        objList.push(abs1);
+
+        let abs4 = new AbsenceModel({
+            files: [],
+            uid: "jillian",
+            section_id: "CMSC132-0101",
+            missed_days: {start: "2019-11-26", end: "2019-11-26"},
+            type: "illness",
+            rationale: "Caffeine overdose",
+            email: "sbarksda@umd.edu"
+        })
+        await abs4.save();
+        objList.push(abs1);
+
+        let abs5 = new AbsenceModel({
+            files: [],
+            uid: "purtilo",
+            section_id: "CMSC132-0101",
+            missed_days: {start: "2019-11-26", end: "2019-11-26"},
+            type: "illness",
+            rationale: "Caffeine overdose",
+            email: "sbarksda@umd.edu"
+        })
+        await abs5.save();
+        objList.push(abs1);
+
+        let abs6 = new AbsenceModel({
+            files: [],
+            uid: "jennifer",
+            section_id: "CMSC132-0101",
+            missed_days: {start: "2019-11-26", end: "2019-11-26"},
+            type: "illness",
+            rationale: "Caffeine overdose",
+            email: "sbarksda@umd.edu"
+        })
+        await abs6.save();
+        objList.push(abs1);
+
+        return res.json(objList);
+    }
+}

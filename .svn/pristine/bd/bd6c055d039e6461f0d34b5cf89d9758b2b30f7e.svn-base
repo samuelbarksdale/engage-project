@@ -1,0 +1,61 @@
+version: '3'
+services:
+  ui: 
+    build: .
+    ports:
+      - 3000:3000
+    depends_on:
+      - course
+      - absence
+      - attendance
+      - polling
+    volumes:
+      - .:/app
+      - /app/node_modules
+  course:
+    build: ../course-service
+    ports:
+      - 8080:8080
+    environment:
+      - PORT=8080
+    depends_on:
+      - mongo
+  absence:
+    build: ../absence-service
+    ports: 
+      - 8081:8081
+    environment:
+      - PORT=8081
+      - COURSE_PORT=8080
+    depends_on:
+      - mongo
+      - course
+  polling:
+    build: ../polling-service
+    ports: 
+      - 8082:8082
+    environment:
+      - PORT=8082
+      - COURSE_PORT=8080
+    depends_on:
+      - mongo
+      - course
+  attendance:
+    build: ../attendance-service
+    ports:
+      - 8083:8083
+    environment:
+      - PORT=8083
+      - COURSE_PORT=8080
+    depends_on:
+      - mongo
+      - course
+  mongo:
+    image: mongo
+    volumes:
+      - data:/data/db
+    ports: 
+      - 27017:27017
+volumes:
+  data:
+  

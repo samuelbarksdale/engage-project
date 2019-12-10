@@ -1,0 +1,182 @@
+FORMAT: 1A
+# Polling Service
+
+The Polling Service is an API allowing an educator to create and publish polls which are then viewed and answered by students. 
+This service has a dependency in the Course Service
+
+# Group Poll 
+Resources related towards the poll object in the API
+
+## Polls [/polls]
+
+### List All Polls [GET /polls/{?page}{?state}{?course_id}{?category}]
+
++ Parameters
+    + page: 1 (optional, number) - Specifies the page of polls to view
+    + state: "published" (optional, string) - Specifies the state (published, unpublished) of polls to view
+    + course_id: "cmsc216" (optional, string) - Return polls only belonging to the specified id
+    + category: "free" (optional, string) - Return polls only belonging to the specified category (free, choice)
+
++ Response 200 (application/json)
+
+        {
+            free_response: [
+                {
+                    "question": "Do you have any questions about the reading?",
+                    "created_at": "2019-11-12T08:40:51.630Z",
+                    "id": 1,
+                    "responses": {
+                        "number": 101,
+                        "voters": [
+                            {
+                                "student_id": 1,
+                                "answer": ""
+                            }
+                        ]
+                    },
+                }
+            ],
+            multiple_choice: [
+                 {
+                    "question": "Who shot first?",
+                    "created_at": "2019-11-12T08:40:51.630Z",
+                    "id": 1,
+                    "choices": [
+                        {
+                            "choice": "Han",
+                            "votes": 100
+                        },
+                        {
+                            "choice": "Gredo",
+                            "votes": 0,
+                        },
+                        {
+                            "choice": "Both",
+                            "votes": 1,
+                        }
+                        ]
+                    ],
+                    "responses": {
+                        "number": 101,
+                        "voters": [
+                            {
+                                "student_id": 1,
+                                "answer": 1
+                            }
+                        ]
+                    },
+                }
+            ]
+
+        }
+
+### Create a New Poll [POST]
+
+This is an Educator only action. Not adding a choices array will cause the service to create a free-response poll.
+
++ Request (application/json)
+
+        {
+            "question": "Who shot first?",
+            "choices": ["Han", "Gredo", "Both"]
+        }
+
++ Response 201 (application/json)
+
+    + Body
+
+            [
+                {
+                    "question": "Who shot first?",
+                    "created_at": "2019-11-12T08:40:51.630Z",
+                    "id": 1,
+                    "choices": [
+                        {
+                            "choice": "Han",
+                            "votes": 0
+                        },
+                        {
+                            "choice": "Gredo",
+                            "votes": 0,
+                        },
+                        {
+                            "choice": "Both",
+                            "votes": 0,
+                        }
+                        ]
+                    ]
+                }
+            ]
+
++ Request (application/json)
+
+        {
+            "question": "Do you have any questions on the latest reading?"
+        }
+
++ Response 201 (application/json)
+
+    + Body
+
+            [
+                {
+                    "question": "Who shot first?",
+                    "created_at": "2019-11-12T08:40:51.630Z",
+                    "id": 1,
+                    "responses": []
+                }
+            ]
+
+## Poll [/polls/{poll_id}]
+
++ Parameters 
+    + poll_id (required, number) - ID of the Poll
+
+### View a Detailed Poll [GET]
+
++ Response 200 (application/json)
+
+        [
+            {
+                "question": "Who shot first?",
+                "created_at": "2019-11-12T08:40:51.630Z",
+                "id": 1,
+                "choices": [
+                    {
+                        "choice": "Han",
+                        "votes": 100
+                    },
+                    {
+                        "choice": "Gredo",
+                        "votes": 0,
+                    },
+                    {
+                        "choice": "Both",
+                        "votes": 0,
+                    }
+                    ]
+                ]
+            }
+        ]
+
+### Vote for a Choice [POST]
+
++ Request (application/json)
+        
+        {
+            "vote": 1
+        }
+
++ Request (application/json)
+        
+        {
+            "response": "I got lost on the fourth step of the proof."
+        }
+
++ Response 201 (application/json)
+
+
+### Delete a Poll [DELETE]
+
++ Response 204 
+

@@ -1,0 +1,57 @@
+import React from 'react';
+import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Absence from './views/Absence'
+import Home from './views/Home'
+import Dashboard from './views/Dashboard'
+//import CourseCard from '../components/CourseCard.js'
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link
+} from "react-router-dom";
+import {Button, Nav} from 'react-bootstrap';
+import Courses from './views/Courses'
+import {Spinner} from "react-bootstrap";
+
+import {createStore, EStoreState} from "./store/createStore";
+import {observer} from "mobx-react-lite";
+
+export const storesContext = React.createContext({
+    store: new createStore(),
+});
+export const useStore: () => createStore = () => React.useContext(storesContext).store;
+
+
+export default observer(function App() {
+    const {storeState, errorMessage} = useStore();
+    if (storeState == EStoreState.init) {
+        return (
+            <div>
+                Loading...
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {storeState == EStoreState.loading && <Spinner animation={"grow"}/>}
+            {storeState}
+            {storeState == EStoreState.error && <div>{errorMessage}</div>}
+            <Router>
+                <Switch>
+                    <Route path='/dashboard/:courseid' children={<Dashboard/>}/>
+                    <Route path='/dashboard' exact>
+                        <Dashboard/>
+                    </Route>
+                    <Route path='/' exact>
+                        <Courses/>
+                    </Route>
+
+                </Switch>
+            </Router>
+        </div>
+    );
+});
+

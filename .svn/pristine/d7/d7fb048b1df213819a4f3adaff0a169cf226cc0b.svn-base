@@ -1,0 +1,450 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+
+const app = express();
+const port = process.env.PORT;
+
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+
+mongoose
+	.connect(
+        'mongodb://mongo:27017/course-service',
+        { useNewUrlParser: true}
+    )
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.log(err));
+mongoose.set('useFindAndModify', false);
+
+var UserTypeEnum = {
+    STUDENT: 1,
+    EDUCATOR: 2
+}
+//User Service Definitions
+var userSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    name: String,
+    uid: String,
+    type: Number, //STUDENT, EDUCATOR
+    classesCurrent: [{courseId: Number, sectionId:Number}],
+    classesPast: [{courseId: Number, sectionId:Number}]
+});
+
+var User = mongoose.model('User', userSchema);
+
+var ClassTypeEnum = {
+    LECTURE: 1,
+    DISCUSSION: 2,
+    OTHER: 3
+}
+
+var DayEnum = {
+    M: 1,
+    T: 2,
+    W: 3,
+    Th:4,
+    F: 5
+}
+//Section Schedule Schema definition
+interface Schedule {
+    type: string, //lecture, discussion, other ENUM
+    days: string[], //M,T,W,H,F DayEnum defined below
+    timeStart: number, //Date type is not appropriate since we just want the hour. EX: 14.25 = 2:15PM
+    timeEnd: number,
+    location: {lat: number, long: number}
+}
+interface Section {
+    id: number,
+    name: string,
+    ta: string[],
+    roster: string[], //useful student user data
+    schedule: Schedule[]
+}
+var scheduleSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    type: Number, //ClassTypeEnum
+    days: [Number], //DayEnum
+    timeStart: mongoose.Schema.Types.Decimal128, //Date type is not appropriate since we just want the hour. EX: 14.25 = 2:15PM
+    timeEnd: mongoose.Schema.Types.Decimal128,
+    location: {
+        lat: mongoose.Schema.Types.Decimal128, 
+        long: mongoose.Schema.Types.Decimal128
+    }
+});
+
+//Section Schema definition
+var sectionSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId, //ObjectId referenced in courseSchema.sections
+    id: Number,
+    name: String,
+    ta: [String],
+    roster: [String], //uid
+    schedule: [mongoose.Schema.Types.ObjectId] //scheduleSchema
+});
+
+//Course Schema definition
+var courseSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    id: Number,
+    name: String,
+    educators: [String], //uid
+    semester: String,
+    topics: [{date: Date, topicsCovered: [String]}],
+    sections: [{type: String}] //sectionSchema
+});
+var Schedule = mongoose.model('Schedule', scheduleSchema);
+var Section = mongoose.model('Section', sectionSchema);
+var Course = mongoose.model('Course', courseSchema);
+
+//async function deleteCourse(id) {//will delete a course from the database, returning a status
+//}
+
+//API ENDPOINTS
+app.get('/', (req, res) => {
+    res.send("Hello, from the course and user service!")
+    console.log("Test")
+})
+
+app.post('/courses', (req, res) => {
+    //Check for required fields
+    if (req.body.id == null) {
+        res.status(400);
+        return res.send("ERROR: Required field course.id missing");
+    } else {
+        if (req.body.sections !== null) {
+            if (req.body.sections[0].id == null) {
+                res.status(400);
+                return res.send("ERROR: Required field course.section.id missing");
+            }
+        }
+    }
+    //test for duplicate POST
+    let test = 0; //0 for not duplicate, 1 for duplicate, 2 for other errors
+    let existingCourse = {};
+    Course.findOne({'id': req.body.id}, async function(err, result) {
+        if (err) {
+            console.error(err);
+            test = 2;
+        } else if (result == null) {
+            console.log("received new course id: " + req.body.id);
+            test = 0;
+        } else {   
+            console.log("course: " + req.body.id + " already exists");
+            test = 1;
+        }
+        //create course object if no duplicate
+        if (test == 0) {
+            //Bottom-up document creation: schedule, section, then course
+            let sectionIds: Array<string> = [];
+            console.log("There are: " + req.body.sections.length + " section objects in this course");
+            for(var i = 0; i < req.body.sections.length; i++) { //section decomp
+                let scheduleIds: Array<string> = [];
+                for (var j = 0; j < req.body.sections[i].schedule.length; j++) { //schedule decomp
+                    var newSchedule = new Schedule();
+                    let sc_id = new mongoose.mongo.ObjectId();
+                    if (req.body.sections[i].schedule[j].location !== null) {
+                        console.log("Empty LOCATION found\n");
+                        newSchedule = new Schedule({
+                            _id: sc_id,
+                            type: req.body.sections[i].schedule[j].type,
+                            days: req.body.sections[i].schedule[j].days,
+                            timeStart: req.body.sections[i].schedule[j].timeStart,
+                            timeEnd: req.body.sections[i].schedule[j].timeEnd,
+                            location: {}
+                        });
+                    } else {
+                        newSchedule = new Schedule({
+                            _id: sc_id,
+                            type: req.body.sections[i].schedule[j].type,
+                            days: req.body.sections[i].schedule[j].days,
+                            timeStart: req.body.sections[i].schedule[j].timeStart,
+                            timeEnd: req.body.sections[i].schedule[j].timeEnd,
+                            location: {
+                                lat: req.body.sections[i].schedule[j].location.lat,
+                                long: req.body.sections[i].schedule[j].location.long
+                            }
+                        });
+                    }
+                    try {
+                        let y = await newSchedule.save();
+                        console.log("Saved schedule with id " + sc_id.toString());
+                        scheduleIds.push(sc_id.toString());
+                    } catch (err2) {
+                        console.error(err2);
+                        return res.send("ERROR 400: Database error. Schedule data type error");
+                    }
+                    console.log(req.body.sections[i].schedule[j]);
+                }
+                let sec_id = new mongoose.mongo.ObjectId();
+                var newSection = new Section({
+                    _id: sec_id,
+                    id: req.body.sections[i].id,
+                    name: req.body.sections[i].name,
+                    ta: req.body.sections[i].ta,
+                    roster: req.body.sections[i].roster,
+                    schedule: scheduleIds
+                });
+                try {
+                    let x = await newSection.save();
+
+                    sectionIds.push(sec_id.toString());
+                    console.log("Saved section with id " + sec_id.toString());
+                } catch(err3) {
+                    console.error(err3);
+                    return res.send("ERROR 400: Database error. Section data type error");
+                }
+                console.log(req.body.sections[i]);
+            }
+            console.log("section ids: " + sectionIds);
+            //Create Course Document
+            var newCourse = new Course({
+                _id: new mongoose.mongo.ObjectId(),
+                id: req.body.id,
+                name: req.body.name,
+                educators: req.body.educators,
+                semester: req.body.semester,
+                topics: req.body.topics,
+                sections: sectionIds
+            });
+            //Save Document
+            newCourse.save(function (err2, newCourse) {
+                if (err2) {
+                    console.error(err2);
+                    return res.send("ERROR 400: Database error, course type error");
+                } else {
+                    console.log("Saved course id " + req.body.id);
+                    return res.send(JSON.stringify(newCourse));
+                }
+            });
+        } else if (test == 1) {
+            //console.log("Updating course id: " + req.body.id);
+            return res.send("Duplicate ID error");
+            /*var update = {
+                'name': req.body.name,
+                'uid': req.body.uid,
+                'type': req.body.type,
+                'classesPast': req.body.classesPast,
+                'classesCurrent': req.body.classesCurrent
+            }
+            if (update.classesCurrent == null) update.classesCurrent = [];
+            if (update.classesPast == null) update.classesPast = [];
+            User.findOneAndUpdate({'uid': req.body.uid}, update, {new: true}, function(err, updated) {
+                if (err) {
+                    console.error(err);
+                    return res.send("ERROR: type casting error");
+                } else {
+                    return res.send(updated);
+                }
+            }) */
+        } else {
+            res.status(400);
+            return res.send("ERROR 400: Database error. Error finding course id");
+        }
+    })
+    //console.log("test = "+test);
+})
+
+app.get('/courses', async (req, res) => {
+    let query = {};
+
+    let courses = await Course.find(query).exec();
+    if (!courses) return res.sendStatus(404);
+    return res.json(courses);
+})
+
+app.get('/courses/:id', async (req, res) => {
+    const {id} = req.params;
+    const course = await Course.find({course_id: id}).exec();
+    if (!course) return res.sendStatus(404);
+    return res.json(course);
+})
+
+app.post('/users', async (req, res) => {
+    //test for duplicate POST
+    let test = 0; //0 for no duplicate, 1 for duplicate, 2 for other errors
+    let existingUser = {};
+    let user = await User.findOne({'uid': req.body.uid}).exec();
+    if (user) return res.json(user);
+
+    //Create User Document for MongoDB
+    let newId = new mongoose.mongo.ObjectId();//for testing only: '123456789ABCDEFFAAAABBBC'
+    let newUser = new User({
+        _id: newId,
+        name: req.body.name,
+        uid: req.body.uid,
+        type: req.body.type,
+        classesCurrent: req.body.classesCurrent,
+        classesPast: req.body.classesPast
+    });
+    //Save Document
+    newUser.save(function (err, newUser) {
+        if (err) {
+            console.error(err);
+            return res.status(500);
+        } else {
+            return res.json(newUser);
+        }
+    });          
+})
+
+// console.log("Updating user uid: " + req.body.uid);
+//             var update = {
+//                 'name': req.body.name,
+//                 'uid': req.body.uid,
+//                 'type': req.body.type,
+//                 'classesPast': req.body.classesPast,
+//                 'classesCurrent': req.body.classesCurrent
+//             }
+//             if (update.classesCurrent == null) update.classesCurrent = [];
+//             if (update.classesPast == null) update.classesPast = [];
+//             User.findOneAndUpdate({'uid': req.body.uid}, update, {new: true}, function(err, updated) {
+//                 if (err) {
+//                     console.error(err);
+//                     return res.send("ERROR: type casting error");
+//                 } else {
+//                     return res.json(updated);
+//                 }
+//             }) 
+
+    //console.log("test = "+test);
+app.get('/users/:uid', (req, res) => {
+    console.log("uid: " + req.params.uid);
+    User.findOne({'uid': req.params.uid}, function(err, user) {
+        if (err) {
+            return console.error(err);
+        } else if (user == null) {
+            return res.status(404).send("User does not exist");
+        } else {
+            console.log(user);
+            return res.json(user);
+        }
+    })
+})
+
+app.get('/users', (req, res) => {
+    let query = {};
+    let params = req.params;
+    if (params.type && (params.type == 1 || params.type == 2)) query.type = params.type
+    
+    User.find(query, (err, users) => {
+        return res.json(users);  
+    });
+});
+
+app.delete('/users/:uid', (req, res) => {
+    console.log("uid: " + req.params.uid);
+    //still need logic for deleting from course objects.
+    //should create a function which removes a student uid from a course object
+    //function can be called from here or from the DELETE course/user/ endpoints1
+    User.deleteOne({'uid': req.params.uid}, function(err) {
+        if (err) return console.error(err);
+        return res.send("deleted user object uid: " + req.params.uid)
+    })
+})
+
+//TESTING ONLY!!
+app.get('/deleteUsers', (req, res) => {
+    User.deleteMany({}, function(err) {
+        if (err) console.error(err);
+        return res.send("Deleted All Users")
+    })
+})
+app.get('/sections', (req, res) => {
+    //res.send("You have reached the course endpoint")
+    Section.find({}, (err, sections) => {
+    res.send(sections);
+  });
+})
+app.get('/schedules', (req, res) => {
+    //res.send("You have reached the course endpoint")
+    Schedule.find({}, (err, schedules) => {
+    res.send(schedules);
+  });
+})
+app.get('/deleteCourses', (req, res) => {
+    Course.deleteMany({}, function(err) {
+        if (err) {
+            console.error(err);
+            res.send("ERROR ohhhhh yeahhhh Course");
+        } else {
+            Section.deleteMany({}, function(err2) {
+                if (err2) {
+                    console.error(err2);
+                    res.send("ERROR ohhhhh yeahhhh Section");
+                } else {
+                    Schedule.deleteMany({}, function(err3) {
+                        if (err3) {
+                            console.error(err3);
+                            res.send("ERROR ohhhhh yeahhhh Schedule");
+                        } else {
+                            res.send("DELETED ALL COURSE (and sub) OBJECTS");
+                        }
+                    });
+                }
+            });
+        }
+    });
+})
+
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.error(err)
+    }
+    return console.log(`Server listening on port ${port}`);
+})
+
+
+
+//graveyard
+/*app.put('/users:uid', (req, res) => {
+    console.log("received user uid: " + req.body.uid)
+
+    //test for existing user
+    var test = 0; //0 for found user, 1 for not found, 2 for errors
+    var existingUser = {};
+    User.findOne({'uid': req.body.uid}, function(err, result) {
+        if (err) {
+            console.error(err);
+            test = 2;
+        } else if (result == null) {
+            test = 1;
+        } else {   
+            console.log("user: " + result.uid + " found");
+                //result.name = //test for which fields are being updated
+                test = 0;
+        }
+        //create user object if no duplicate
+        if (test == 0) {
+            //Create User Document for MongoDB
+            var newId = new mongoose.mongo.ObjectId();//for testing only: '123456789ABCDEFFAAAABBBC'
+            var newUser = new User({
+                _id: newId,
+                name: req.body.name,
+                uid: req.body.uid,
+                type: req.body.type,
+                classesCurrent: req.body.classesCurrent,
+                classesPast: req.body.classesPast
+            });
+            //Save Document
+            newUser.save(function (err2, newUser) {
+                if (err2) {
+                    console.error(err2);
+                    return res.send("ERROR 400");
+                } else {
+                    console.log("Saved " + req.body.uid + " with id " + newId.toString());
+                    return res.send(JSON.stringify(newUser));
+                }
+            });
+        } else if (test == 2) { //if error, return
+            return res.send("ERROR 400");
+        } else {
+            //console.log(existingUser);
+            return res.send(existingUser);  
+        }
+    })
+    //console.log("test = "+test);
+})*/

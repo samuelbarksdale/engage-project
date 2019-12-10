@@ -1,0 +1,67 @@
+import React, {Component} from 'react';
+import { Form, Button } from 'react-bootstrap';
+
+export default class PollForm extends Component {
+
+    initialState = {
+        courseId: '',
+        question: '',
+        questionType: '',
+        choices: [],
+    }
+
+    constructor(props:any) {
+        super(props);
+
+        this.state = this.initialState;
+    }
+
+    render() {
+
+        return (
+            <Form>
+            <Form.Group controlId="courseId">
+                <Form.Label>Course ID</Form.Label>
+                <Form.Control type="text" placeholder="Enter ID of course to poll" />
+            </Form.Group>
+
+            <Form.Group controlId="question">
+                <Form.Label>Question</Form.Label>
+                <Form.Control as="textarea" placeholder="Enter question for poll" />
+            </Form.Group>
+
+            <Form.Group controlId="questionType">
+                <Form.Label>Question Type</Form.Label>
+                <Form.Control as="select" multiple>
+                    <option>Free Response</option>
+                    <option>Multiple Choice</option>
+                </Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId="choices">
+                <Form.Label>Answer Choices</Form.Label>
+                <Form.Text className="text-muted">
+                    Provide only if question type is Multiple Choice.
+                </Form.Text>
+                <Form.Row>
+                    <Form.Control type="text" placeholder="Answer A"/>
+                </Form.Row>
+                <Form.Row>
+                    <Form.Control type="text" placeholder="Answer B"/>
+                </Form.Row>
+                <Form.Row>
+                    <Form.Control type="text" placeholder="Answer C"/>
+                </Form.Row>
+                <Form.Row>
+                    <Form.Control type="text" placeholder="Answer D"/>
+                </Form.Row>
+            </Form.Group>
+
+            <Button variant="primary" type="submit">
+                Submit
+            </Button>
+            </Form>
+        )
+    }
+
+}

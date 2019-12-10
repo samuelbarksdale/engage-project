@@ -1,0 +1,5 @@
+
+export default {
+    courseServiceUrl: `http://course:${process.env.COURSE_PORT}`,
+    port: process.env.PORT
+}

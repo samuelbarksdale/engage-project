@@ -1,0 +1,35 @@
+import React from 'react';
+import './App.css';
+import axios from 'axios'
+import 'bootstrap/dist/css/bootstrap.min.css';
+import {Alert} from 'react-bootstrap'
+
+export default class App extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {user: {}, showAlert: false}
+  }
+  async componentDidMount() {
+    let res = await axios.get("/api/me");
+    if (res.status < 300) this.setState({user: res.data})
+    else this.setState({showAlert: true})
+  }
+ 
+
+  render() {
+    const LinkStyles = {
+      textDecoration: 'none',
+      color: 'white',
+      margin: '7px',
+    }
+    return (
+      <div>
+         {
+          this.state.showAlert
+        }
+      </div>
+     
+    );
+  }
+}
+export default App;

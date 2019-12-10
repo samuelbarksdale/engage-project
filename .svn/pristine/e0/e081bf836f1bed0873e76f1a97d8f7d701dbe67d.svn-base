@@ -1,0 +1,220 @@
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import Keygrip from 'keygrip';
+import cookieSession from 'cookie-session';
+import express from 'express';
+import mongoose from 'mongoose';
+import config from './config';
+import multer from 'multer';
+// import csurf from 'csurf';
+import cas from 'connect-cas';
+import cors from 'cors';
+import user from './routes/user';
+import absence from './routes/absence'
+import classes from './routes/classes';
+import attendance from './routes/attendance';
+import polls from './routes/polling'
+import { UserModel } from './schemas/userSchema';
+
+
+const Upload = multer({storage: multer.memoryStorage()});
+// const Upload = multer({storage: 'upload/'});
+const MAX_IMAGES = 4;
+
+
+
+const port = config.port;
+const keyPath = config.keyPath;
+const certPath = config.certPath;
+const useHTTPS = config.useHTTPS;
+const mongoUrl = `mongodb://mongo:${config.mongoPort}/engage`;
+const domain = config.domain;
+const authHost = config.authHost;
+
+const app = express();
+app.use(cors({
+    origin:"http://localhost:3000",
+    credentials: true
+}));
+
+app.use(express.json())
+app.use((req, res, next) => {
+    // request logger
+    console.log(req.method + " " + req.originalUrl)
+    next()
+})
+
+let secretKeys;
+// Cookie hash secret to prevent or at least reduce the possibility for cookie hijacking.
+if (process.env.SECRET_SESSION){
+    secretKeys = process.env.SECRET_SESSION.split("&")
+} else secretKeys = [crypto.randomBytes(32).toString('base64')]
+
+// Need to implement this
+// let xcsrf = csurf({cookie: true})
+
+app.use(cookieSession({
+    keys: new Keygrip(secretKeys)
+}));
+
+cas.configure({
+    host: authHost,
+    protocol: "https",
+    path: {
+        login: "/login",
+        serviceValidate: "/serviceValidate"
+    }
+})
+
+
+if (process.env.NODE_ENV === 'development'){
+    app.use((req, res, next) => {
+        // skip authentication and set as desired user
+        if (req.headers.did) {
+            req.session.cas = {user: req.headers.did}
+        } else req.session.cas = {user: "lherman"}
+
+        next();
+    });
+
+    //update user test code. bypassing security
+    /*app.use((req, res, next) => {
+        req.session.cas = {user: "lherman"};
+        next();
+    });*/
+}
+
+app.all('/api/*', (req, res, next) => {
+    if (!req.session.cas || !req.session.cas.user) { 
+       return res.sendStatus(401)
+    } 
+    next()
+});
+
+app.use(express.static("public"));
+// Bundle front end here
+app.get('/', (req, res) => {
+    if (req.session.cas && req.session.cas.user) {
+        return res.sendFile(path.join(__dirname, "./public/index.html"))
+    } else {
+        return res.redirect('/login')
+    }
+    
+}); 
+
+if (process.env.NODE_ENV === "development") {
+    app.get('/login', async (req, res) => {
+        console.log("TEST")
+        let user = await UserModel.findOne({did: req.session.cas.user}).exec();
+        return res.json(user);
+    })
+} else {
+    app.get('/login', cas.serviceValidate(), cas.authenticate(), (req, res) => {
+        return res.redirect("/")
+    });
+}
+
+
+
+async function connectToDatabase() {
+    try {
+        let client = await mongoose.connect(mongoUrl, { autoReconnect: true, useNewUrlParser: true});
+        if (useHTTPS) {
+            https.createServer({
+                key: fs.readFileSync(path.join(__dirname, keyPath)),
+                cert: fs.readFileSync(path.join(__dirname, certPath))
+            }, app).listen(port, (err: any) => {
+                if (err) console.error(err);
+                console.log(`Server listening over https on port ${port}`)
+            })
+        } else {
+            app.listen(port, (err) => {
+                if (err) console.error(err);
+                console.log(`Server listening over http on port ${port}`);
+            })
+        }
+    
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+connectToDatabase();
+// USERS
+
+app.get("/api/me", user.me)
+app.get("/api/me/classes", user.myClasses)
+app.post('/larry', user.larry)
+app.get("/api/users/:id/lectures", user.listLectures)
+app.get("/api/users/:id/course", user.listCourse)
+app.get('/api/users', user.list)
+app.get("/api/me/classes", user.myClasses)
+app.get("/api/me", user.me)
+
+
+// ATTENDANCE
+app.route('/api/attendance')
+    .get(attendance.list)
+    .post(attendance.create)
+
+// CLASSES
+app.route('/api/classes')
+    .get(classes.list)
+    .post(classes.create)
+    .put(classes.updateCourse)
+    
+app.route('/api/classes/:id')
+    .get(classes.retrieve)
+    .delete(classes.removeOne)
+
+app.route('/api/classes/:id/sections')
+    .get(classes.sectionsList)
+
+// ABSENCES
+app.route('/api/absences')
+    .get(absence.getAbsences)
+    .post(Upload.array('files',MAX_IMAGES),absence.createAbsenceReport)
+
+app.route('/api/absences/:id')
+    .get(absence.getAbsenceId)
+    .put(absence.updateAbsence)
+
+ app.route('/api/absences/delete/:id')
+    .get(absence.getAbsences)
+    .delete(absence.deleteAbsence)
+
+app.route('/api/absences/delete')
+    .get(absence.getAbsences)
+    .delete(absence.deleteAbsences)
+    
+
+app.route('/api/absences/:id/files')
+    .get(absence.getFiles)
+    .post(Upload.array('files', MAX_IMAGES), absence.uploadFiles)
+    
+app.route('/api/absences/:id/files/:fileId')
+    .get(absence.fetchFile)
+
+// POLLING
+app.route("/api/polls")
+    .get(polls.listPolls)
+    .post(polls.create)
+
+app.get("/api/polls/courses/:courseId", polls.listByCourseId)
+app.get("/api/polls/students/:studentId", polls.listByStudent)
+
+app.route("/api/polls/:pollId")
+    .get(polls.retrieveById)
+    .delete(polls.deleteById)
+
+app.route("/api/polls/:pollId/choices/:choiceId")
+    .get(polls.retrievePollChoice)
+    .put(polls.insterVote)
+
+app.put("/api/polls/:pollId/close", polls.close)
+
+app.route("/api/polls/:pollId/text")
+    .get(polls.retrieveTextPoll)
+    .put(polls.insterText)

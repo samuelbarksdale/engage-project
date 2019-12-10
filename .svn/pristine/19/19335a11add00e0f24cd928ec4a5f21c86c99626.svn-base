@@ -1,0 +1,19 @@
+import React, {Label} from 'react';
+import AbsenceList from "../components/AbsenceList"
+
+export default class Dashboardpage extends React.Component {
+
+    constructor(props) {
+        super(props)
+    }
+
+    render() {
+        return (
+        <div>
+            <h1>Welcome to AbsencePage</h1>
+            
+            <AbsenceList /> 
+        </div>
+        );
+    }
+}

@@ -1,0 +1,79 @@
+import path from 'path';
+import _ from 'lodash';
+import config from './config';
+
+export default function Routes(app, ctx) {
+    const LEC = 'LEC';
+    const DIS = 'DIS';
+    const OTH = 'OTH';
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../docs"),
+        }
+        res.sendFile('./docs.html', options)
+
+    }
+
+    async function getAttendance(req, res) {
+        const {page, sort, student_id, section_id, type, start, end} = req.params
+
+        const timestamp = {};
+        const query = {};
+        if (student_id) Object.assign(query, student_id)
+        if (section_id) Object.assign(query, section_id)
+        if (type) Object.assign(query, type)
+        if (start) timestamp["$gte"] = start
+        if (end) timestamp["$lte"] = end
+        if (!_.isEmpty(timestamp)) Object.assign(query, {timestamp})
+
+        try {
+
+            let result = await ctx.db.collection('attendance').find(query)
+            // Pagination and sort will happen here
+            const results = await result.toArray();
+            return res.json(results);
+        } catch (e) {
+            console.error(e)
+            return res.status(500).end();
+        }
+ 
+    }
+
+    async function logAttendance(req, res) {
+        const {student_id, section_id, type} = req.body;
+
+        if (!student_id || !section_id || !type) return res.status(400).end()
+        if (type != LEC && type != DIS && type != OTH) return res.status(400).end()
+
+        // const endpoint = "";
+        // const response = await fetch(config.courseServiceUrl + endpoint);
+        // const json = await response.json();
+
+        let now = new Date();
+        const timestamp = now.getTime();
+        let course_id = section_id.slice(0,4)
+        const log = {
+            "student_id": student_id,
+            "timestamp": timestamp,
+            "section_id": section_id,
+            "course_id": course_id,
+            "meeting_type": type
+        }
+        try {
+            let result = await ctx.db.collection("attendance").insertOne(log)
+            let newLog = result.ops
+            res.json(newLog)
+        } catch (e) {
+            console.error(e)
+            return res.status(500).end()
+        }
+        
+
+    }
+
+    app.get('/', serveDocs);
+    app.route('/attendance')
+        .get(getAttendance)
+        .post(logAttendance)
+}
+

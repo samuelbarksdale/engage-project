@@ -1,0 +1,25 @@
+FORMAT: 1A
+
+# Attendance Service
+
+The Attendance Service is responsible for storing the attendance events of students. This service has a dependency on the Course Service.
+
+# Group Attendance
+
+## Attendance [/attendance]
+
+### List all attendance [GET]
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id", 1,
+                "student_id": 000001,
+                "course_id": "cmsc132",
+                "class_id": "cmsc132-1",
+                "timestamp": "2019-11-13T:19:18:22",
+            }
+        ]
+
+### Create Student Attendance [POST]

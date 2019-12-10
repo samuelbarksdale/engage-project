@@ -1,0 +1,17 @@
+import React from 'react';
+import api from '../api'
+export default class AttendancePage extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.state = {attendance: [], filter: {}}
+    }
+
+    async componentDidMount() {
+        
+    }
+
+    render() {
+        return (<h1>Welcome to AttendancePage</h1>);
+    }
+}

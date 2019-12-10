@@ -1,0 +1,160 @@
+import path from 'path';
+import _ from 'lodash';
+import multer from 'multer';
+import GridFSBucket from 'mongodb';
+import Readable from 'stream';
+
+export default async function Routes(app, ctx) {
+    const Upload = multer({storage: multer.memoryStorage()});
+    const MAX_IMAGES = 4;
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../docs"),
+        }
+        res.sendFile('./output.html', options)
+
+    }
+
+    // Methods for /absences route
+
+    async function getAbsences(req, res){
+        const{course_name, section_id} = req.query
+        
+        const query = {};
+        if (course_name) Object.assign(query, {course_name})
+        if (section_id) Object.assign(query, {section_id})
+
+        try {
+            let result = await ctx.db.collection('absences').find(query)
+            const results = await result.toArray();
+            console.log(results);
+            return res.json(results);
+        } catch (e){
+            console.error(e)
+            return res.status(500).end();
+        }
+
+    }
+
+    async function deleteAbsences(req, res) {
+        try {
+            await ctx.db.collection("absences").deleteMany({});
+            res.status(204).end()
+        } catch(e) {
+            console.error(e)
+            res.status(500).end();
+        }
+    }
+
+    // Methods for /absence/:id route
+
+    async function getAbsence(req, res) {
+        const{absence_id} = req.query
+        const query = {};
+        if (absence_id) {
+            Object.assign(query, {absence_id})
+            try {
+                let result = await ctx.db.collection('absences').find(query)
+                const results = await result.toArray();
+                return res.json(results);
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end();
+            }
+        } else {
+            return res.status(400).end()
+        }
+
+    }
+
+    async function deleteAbsence(req, res) {
+        const{absence_id} = req.query 
+        const query = {};
+        if (absence_id) {
+            Object.assign(query, {absence_id})
+            try {
+                let result = await ctx.db.collection('absence').deleteOne(query)
+                const results = await result.toArray();
+                return res.json(results);
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end();
+            }
+        } else {
+            return res.status(400).end()
+        }
+    }
+
+    async function createAbsenceReport(req, res) {
+        const files = req.files;
+        const form = JSON.parse(req.body.form)
+        const State = {
+            Approved: "Approved",
+            Rejected: "Rejected",
+            Pending: "Pending"
+        }
+    
+        const absenceObj = {
+            "files": [],
+            "status": State.Pending
+        }
+        const absenceMandatory = {
+            "uid": "",
+            "section_id": "",
+            "missed_days": {
+                "start": "",
+                "end": "",
+            },
+            "type": "",
+            "rationale": "",
+        }
+    
+        Object.keys(absenceObj).foreEach(k => {
+            if (form.hasOwnProperty(k)) {
+                absenceMandatory[k] = form[k]
+            } else {
+                res.sendStatus(400).end();
+            }
+        })
+    
+        if (files) {
+            const bucket = new GridFSBucket(ctx.db);
+            let ids = files.map((file) => {
+                let options = {
+                    content_type: file.mimetype
+                }
+                let readStream = new Readable();
+                readStream.push(file.buffer);
+                readStream.push(null);
+                
+                let writeStream = bucket.openUploadStream(file.originalname, options);
+                return readStream.pipe(writeStream)
+                    .on('finish', function() {
+                        return writeStream.id
+                    })
+                    .on('error', function() {
+                        res.sendStatus(500).end()
+                    })
+            })
+            absenceObj.files = ids;       
+        } 
+        try {
+            let result = await ctx.db.collection("absences").insertOne(absenceObj)
+            return res.status(201).json(result.ops);
+        } catch (e) {
+            console.error(e);
+            return res.sendStatus(500).end();
+        }
+    
+    }
+
+    app.get('/', serveDocs);
+    app.route('/absences')
+        .get(getAbsences)
+        .delete(deleteAbsences)
+        .post(Upload.array('imgs', MAX_IMAGES), createAbsenceReport)
+    app.route('/absences/:id')
+        .get(getAbsence)
+        .delete(deleteAbsence)
+
+}

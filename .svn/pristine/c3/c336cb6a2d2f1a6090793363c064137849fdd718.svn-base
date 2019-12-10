@@ -1,0 +1,72 @@
+import React from 'react';
+import {Navbar, Nav} from 'react-bootstrap'
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  Redirect
+} from "react-router-dom";
+import DashboardPage from './pages/DashboardPage';
+import AttendancePage from './pages/AttendancePage';
+import AbsencePage from './pages/AbsencePage';
+import PollsPage from './pages/PollsPage';
+import SettingsPage from './pages/SettingsPage';
+import api from './api'
+import './App.css';
+
+export default class App extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {user: {}}
+  }
+
+  async componentDidMount() {
+    let me = await api.getMe();
+    this.setState({user: me});
+  }
+
+  render() {
+    
+    return (
+      <Router>
+        <Navbar style={{background: "#990000"}} expand="lg">
+          <Link to="/dashboard"><Navbar.Brand style={{color: "#FFFFFF"}}>Engage</Navbar.Brand></Link>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="mr-auto">
+              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/attendance">Attendance</Link>
+              <Link to="/absence">Absence</Link>
+              <Link to="/polls">Polls</Link>
+              <Link to="/settings">Settings</Link>
+            </Nav>
+            <div className="mr-sm-2"><p>{`Signed in as: ${this.state.user.name}`}</p></div>
+          </Navbar.Collapse>
+        </Navbar>
+
+
+        <Switch>
+          <Route path="/dashboard">
+            <DashboardPage user={this.state.user}/>
+          </Route>
+          <Route path="/attendance">
+            <AttendancePage user={this.state.user}/>
+          </Route>
+          <Route path="/absence">
+            <AbsencePage user={this.state.user}/>
+          </Route>
+          <Route path="/polls">
+            <PollsPage user={this.state.user}/>
+          </Route>
+          <Route path="/settings">
+            <SettingsPage user={this.state.user}/>
+          </Route>
+          <Route path="/">
+            <Redirect to="/dashboard"/>
+          </Route>
+        </Switch>
+      </Router>
+    )
+  }
+}

@@ -1,0 +1,124 @@
+import React from 'react';
+import {Button, Col, Container, Row} from 'react-bootstrap'
+import CSVReader from "react-csv-reader";
+import api from '../api';
+
+export default class CourseForm extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {lectures: [], sections: [], roster: [], courseName: "", tas: ""}
+        this.handleLecturesUpload = this.handleLecturesUpload.bind(this);
+        this.handleRosterUpload = this.handleRosterUpload.bind(this);
+        this.handleSectionsUpload = this.handleSectionsUpload.bind(this);
+        this.handleDelete = this.handleDelete.bind(this);
+    }
+
+    async handleUpdate() {
+        try {
+            const parseDays = (days) => {
+                try{
+                    return days.match(/[A-Z][a-z]?/g)
+                } catch (e) {
+                    throw new Error("Invalid date character, must be M T W Th F ")
+                }
+            };
+            let newSections = this.state.sections.map(s => {
+                let {section, days, ...rest} = s;
+                let daysArr = parseDays(days) 
+                if (daysArr) return {...rest, days: daysArr, sectionId: section}
+                return;
+            })
+            let newLectures = this.state.lectures.map(l =>{
+                let {days, ...rest} = l;
+                let daysArr = parseDays(days)
+                if (daysArr) return {...rest, days: daysArr}
+                return;
+            })
+            let course = {
+                courseName: this.state.courseName.toLowerCase(),
+                roster: this.state.roster,
+                lectures: newLectures,
+                sections: newSections,
+                tas: this.state.tas.replace(' ', '').split(',')
+            }
+            let success = await api.updateCourse(course);
+            if (success) {
+                this.props.showAlert("success", "Course successfully updated")
+            } else {
+                this.props.showAlert("danger", "The Course could not be updated")
+            }
+        } catch(e) {
+            this.props.showAlert("danger", e.message)
+        }
+        
+    }
+
+    async handleDelete() {
+        let res = await api.deleteCourse(this.props.course);
+        if (!res.error) this.props.showAlert("Successfully deleted course")
+    }
+
+    handleRosterUpload(data) {
+        this.setState({roster: data});
+    }
+
+    handleSectionsUpload(data) {
+        this.setState({sections: data})
+    }
+
+    handleLecturesUpload(data) {
+        this.setState({lectures: data})
+    }
+
+    render() {
+        const options = {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+        }
+        return  (
+            <Container>
+            <Row>
+                <h4 as={Col}>{this.props.course.toUpperCase()}</h4>
+                <div as={Col} className="ml-5" style={{width: "80px", height: "50px"}}>
+                    <Button size="sm" variant="danger" onClick={this.handleDelete}>Delete</Button>
+                </div>
+                
+            </Row>
+            
+            <table>
+                <tr>
+                    <th>Roster</th>
+                    <th>Lectures</th>
+                    <th>Sections</th>
+                </tr>
+                <tr>
+                    <td>
+                        <CSVReader
+                            onFileLoaded={this.handleRosterUpload}
+                            parserOptions={options}
+                        />
+                    </td>
+                    <td>
+                        <CSVReader
+                            onFileLoaded={this.handleLecturesUpload}
+                            parserOptions={options}
+                        />
+                    </td>
+                    <td>
+                        <CSVReader
+                            onFileLoaded={this.handleSectionsUpload}
+                            parserOptions={options}
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <Button onClick={this.handleUpdate} style={{marginTop: "10px", background: "#990000", borderColor: "#990000"}}  size="md">Update Course</Button>
+                    </td>
+                </tr>
+            </table>
+            </Container>
+        )
+    }
+}

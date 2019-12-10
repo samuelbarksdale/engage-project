@@ -1,0 +1,36 @@
+import express from 'express';
+import MongoClient from 'mongodb';
+import Routes from './routes'
+
+
+const mongoUrl = "mongodb://mongo:27017"
+const dbName = "store";
+const port = 8080;
+const app = express();
+// middleware and authentication
+app.use(express.json())
+//app.use(cas)
+let routes;
+let ctx;
+
+
+connectToDatabase(mongoUrl).then((db) => {
+        ctx = {...ctx, db}
+        routes = Routes(app, ctx);
+        app.listen(port, (err) => {
+            if (err) console.error(err);
+            console.log(`Server listening on port ${port}`);
+        })
+    }).catch(err => console.error(err))
+
+
+async function connectToDatabase(url) {
+    try{
+        const client = await new MongoClient(url, {autoReconnect: true, useNewUrlParser: true});
+        let db =  client.db("store");
+        return Promise.resolve(db)
+    } catch (e){
+        console.error("Failed to connect to the mongodb instance")
+        return Promise.reject(e)
+    } 
+}

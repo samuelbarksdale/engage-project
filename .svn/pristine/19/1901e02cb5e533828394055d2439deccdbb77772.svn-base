@@ -1,0 +1,60 @@
+import React from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Absence from './Absence'
+import Home from './Home'
+//import CourseCard from '../components/CourseCard.js'
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
+import { Button, Nav } from 'react-bootstrap';
+
+
+function Dashboard() {
+  return (
+      <Router>
+      <div>
+      <Nav
+      
+       >
+        <Nav.Item>
+            <Link to='/home'> Home</Link>
+        </Nav.Item>
+        <Nav.Item>
+        <Link to='/absence'> Absences</Link>
+        </Nav.Item>
+        <Nav.Item>
+        <Link to='/about'> about</Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link>
+            Logout
+          </Nav.Link>
+        </Nav.Item>
+    </Nav>
+
+        {/* A <Switch> looks through its children <Route>s and
+            renders the first one that matches the current URL. */}
+      <Route path="/about" render={() => <p>test</p>}>     
+        </Route>
+        <Route path="/home" exact>
+            <Home />
+        </Route>
+        <Route path="/absence" exact>
+            <Absence />
+          </Route>
+      </div>
+      </Router>
+  );
+}
+
+
+function About() {
+  return <h2>About</h2>;
+}
+
+
+
+export default Dashboard;

@@ -1,0 +1,150 @@
+import React from "react";
+import {Form, Col, Container, Button} from 'react-bootstrap'
+import CSVReader from "react-csv-reader";
+import GeolocationButtion from './GeolocationButton';
+import TimePicker from 'react-time-picker';
+
+export default class LectureForm extends React.Component {
+    constructor(props) {
+        super(props)
+        this.default = {
+            lat: "",
+            lng: "",
+            radius: "",
+            sections: [],
+            days: {"M": false, "T": false, "W": false, "Th": false, "F": false},
+            start: "",
+            end: "",
+            lectureName: ""
+        }
+        this.state = Object.assign({}, this.default)
+        this.handleGeolocation = this.handleGeolocation.bind(this)
+        this.handleSectionUpload = this.handleSectionUpload.bind(this);
+        this.handleSave = this.handleSave.bind(this);
+    }
+
+     handleGeolocation(coords) {
+        this.setState({lat: coords.latitude, lng: coords.longitude})
+    }
+    
+    handleSectionUpload(sections) {
+        let newSections = sections.map(s => {
+            let {section, days, ...rest} = s;
+            let re = new RegExp("/[A-Z][a-z]?/g)")
+            let daysArr = days.match(re)
+            return {...rest, days: daysArr, sectionId: section}
+        })
+        this.setState({sections: newSections})
+    }
+
+    handleSave() {
+        let days = Object.keys(this.state.days).reduce((acc, d) => {
+            return this.state.days[d] ? acc.concat(d) : acc
+        }, [])
+        let sections = this.state.sections.map(section => {
+
+            let validated = (section.lat === null || section.lng === null) 
+                ? {lat: parseFloat(this.state.lat), lng: parseFloat(this.state.lng)}
+                : {}
+            return Object.assign({...section}, validated)
+        })
+
+        this.props.saveLecture(Object.assign({...this.state}, {days, sections}));
+        this.setState(this.default)
+    }
+
+    render() {
+        const options = {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true
+        }
+        return (
+            <Container variant="light">
+            <Form.Group>
+                <Form.Row>
+                    <Form.Group as={Col}>
+                        <Form.Label>Lecture Name</Form.Label>
+                        <Form.Control onChange={(e) => this.setState({lectureName: e.target.value})} value={this.state.lectureName} type="text" placeholder="CMSC216-01" />
+                    </Form.Group>
+                    <Form.Group as={Col}>
+                        <Form.Label>Sections</Form.Label>
+                        <CSVReader
+                            onFileLoaded={this.handleSectionUpload}
+                            parserOptions={options}
+                        />
+                    </Form.Group>
+                </Form.Row>
+            <Form.Label>Meeting Days</Form.Label>
+            <Form.Group>
+                {
+                    ["M", "T", "W", "Th", "F"].map((day) => 
+                        <Form.Check 
+                            inline 
+                            label={day}
+                            id={day} 
+                            onChange={({target}) => {
+                                let next = {}
+                                next[target.id] = !this.state.days[target.id]
+                                this.setState({
+                                    days: Object.assign(this.state.days, next)
+                                });
+                            }}
+                            value={this.state.days[day]}
+                            type="checkbox" 
+                        />
+                    )
+                }       
+            </Form.Group>
+        
+            <Form.Row>
+            <Form.Label className="mr-2">Lecture Start</Form.Label>
+                <Form.Group >
+                    <TimePicker
+                        onChange={(time) => {
+                            this.setState({start: time})
+                        }}
+                        value={this.state.start}
+                        disableClock={true}
+                    />
+                </Form.Group>
+                <Form.Label className="ml-3 mr-2">Lecture End</Form.Label>
+                <Form.Group >
+                    <TimePicker
+                        onChange={(time) => {
+                            this.setState({end: time})
+                        }}
+                        value={this.state.end}
+                        disableClock={true}
+                    />
+                </Form.Group>
+            </Form.Row>
+            
+
+            <Form.Row>
+                <Form.Group as={Col} >
+                <Form.Label>Latitude</Form.Label>
+                <Form.Control onChange={(e) => this.setState({lat: e.target.value})} value={this.state.lat} />
+                </Form.Group>
+
+                <Form.Group as={Col} >
+                <Form.Label>Longitude</Form.Label>
+                <Form.Control onChange={(e) => this.setState({lng: e.target.value})} value={this.state.lng} />
+                </Form.Group>
+
+                <Form.Group as={Col}>
+                <Form.Label>Radius (meters)</Form.Label>
+                <Form.Control onChange={(e) => this.setState({radius: e.target.value})} value={this.state.radius} placeholder="10" />
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
+                <Form.Group as={Col} >
+                    <GeolocationButtion locationCallback={this.handleGeolocation}/>
+                </Form.Group>
+            </Form.Row>
+            <Form.Row><Button onClick={this.handleSave}>Save Lecture</Button></Form.Row>
+        </Form.Group>
+        </Container>
+        )
+    }
+}

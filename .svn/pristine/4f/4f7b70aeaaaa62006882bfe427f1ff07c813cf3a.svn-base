@@ -1,0 +1,73 @@
+import React, {Label} from 'react';
+import { Button, Card } from 'react-bootstrap';
+import {
+    BrowserRouter as Router,
+    Link,
+    useLocation,
+    Switch, 
+    Route
+  } from "react-router-dom";
+  import AbsenceCard from "./AbsenceCard"; 
+
+  export default class AbsenceList extends React.Component {
+
+    constructor(props){
+        super(props); 
+        this.state = { list_of_absences:[] }
+    }
+    
+    componentWillMount(){
+        fetch("http://localhost:8080/api/absences", {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              
+          }
+          })
+          .then((response) => response.json()).then((responseJSON) => {
+             
+              this.setState({list_of_absences: responseJSON}); 
+          })
+    } 
+
+    handleUpdate(){
+        window.location.reload(); 
+    }
+
+    handleAllDelete(){
+     fetch("http://localhost:8080/api/absences/deleteAll", {
+            method: 'DELETE',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',    
+          }
+          })
+
+        window.location.reload(); 
+    }
+    
+    render() {
+        
+        let list = (this.state.list_of_absences).map((data) => {
+            return (
+               <AbsenceCard
+                section_id = {data.section_id}    
+                type={data.type} 
+                rationale={data.rationale}
+                uid={data.uid}
+                
+                />
+                )
+        })
+
+         return (
+               <div>
+                   <Button onClick={this.handleUpdate}>Refresh</Button>
+                   <Button onClick={this.handleAllDelete}> Delete All Requests </Button>
+                   {list}
+               </div>
+             )
+    }
+} 
+

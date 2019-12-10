@@ -1,0 +1,37 @@
+import mongoose, { Mongoose } from 'mongoose';
+
+const absenceSchema = new mongoose.Schema({
+    files: {
+        type: [mongoose.Schema.Types.ObjectId],
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ["pending", "approved", "denied"],
+        required: true
+    },
+    did: String,
+    courseName: String,
+    sectionId: String,
+    missed_days: {
+        start: String,
+        end: String,
+    },
+    type: {
+        type: String,
+        enum: [
+            "illness",
+            "religious",
+            "military",
+            "university",
+            "external",
+            "other"
+        ],
+        required: true
+    },
+    rationale: String,
+    email: String
+}, {timestamps: { createdAt: 'created_at' }});
+
+const AbsenceModel = mongoose.model('Absence', absenceSchema);
+export {AbsenceModel}

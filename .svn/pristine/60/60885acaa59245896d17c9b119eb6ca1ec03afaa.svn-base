@@ -1,0 +1,91 @@
+import path from 'path';
+import _ from 'lodash';
+
+export default function Routes(app, ctx) {
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../docs"),
+        }
+        res.sendFile('./output.html', options)
+
+    }
+
+    // Methods for /absences route
+
+    async function getAbsences(req, res){
+        const{course_name, section_id} = req.query
+        
+        const query = {};
+        if (course_name) Object.assign(query, {course_name})
+        if (section_id) Object.assign(query, {section_id})
+
+        try {
+            let result = await ctx.db.collection('absences').find(query)
+            const results = await result.toArray();
+            console.log(results);
+            return res.json(results);
+        } catch (e){
+            console.error(e)
+            return res.status(500).end();
+        }
+
+    }
+
+    async function deleteAbsences(req, res) {
+        try {
+            await ctx.db.collection("absences").deleteMany({});
+            res.status(204).end()
+        } catch(e) {
+            console.error(e)
+            res.status(500).end();
+        }
+    }
+
+    // Methods for /absence/:id route
+
+    async function getAbsence(req, res) {
+        const{absence_id} = req.query
+        const query = {};
+        if (absence_id) {
+            Object.assign(query, {absence_id})
+            try {
+                let result = await ctx.db.collection('absences').find(query)
+                const results = await result.toArray();
+                return res.json(results);
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end();
+            }
+        } else {
+            return res.status(400).end()
+        }
+
+    }
+
+    async function deleteAbsence(req, res) {
+        const{absence_id} = req.query 
+        const query = {};
+        if (absence_id) {
+            Object.assign(query, {absence_id})
+            try {
+                let result = await ctx.db.collection('absence').deleteOne(query)
+                const results = await result.toArray();
+                return res.json(results);
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end();
+            }
+        } else {
+            return res.status(400).end()
+        }
+    }
+
+    app.get('/', serveDocs);
+    app.route('/absences')
+        .get(getAbsences)
+        .delete(deleteAbsences)
+    app.route('/absences/:id')
+        .get(getAbsence)
+        .delete(deleteAbsence)
+
+}

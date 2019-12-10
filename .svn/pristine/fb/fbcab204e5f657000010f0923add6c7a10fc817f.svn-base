@@ -1,0 +1,15 @@
+import React from 'react';
+import api from '../api'
+export default class Dashboardpage extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.state = {}
+    }
+    componentDidMount() {
+        
+    }
+    render() {
+        return (<h4>{"Welcome to Engage, " + this.props.user.name}</h4>);
+    }
+}

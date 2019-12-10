@@ -1,0 +1,72 @@
+import React from 'react';
+import { Button, Card} from 'react-bootstrap';
+import {
+    BrowserRouter as Router,
+    Link,
+    useLocation,
+    Switch, 
+    Route
+  } from "react-router-dom";
+  //import email from 'react-native-email';
+
+  const APPROVAL_SUBJECT_TEXT = "Your request has been approved"; 
+  const DENIAL_SUBJECT_TEXT = "Your request has been denied"; 
+
+  const APPROVAL_BODY_TEXT = "Your request has been approved"; 
+  const DENIAL_BODY_TEXT = "Your request has been approved"; 
+
+
+
+  export default class AbsenceCard extends React.Component {
+    
+    // sendEmail(subject, body){
+
+    //   const to = [this.props.email] // string or array of email addresses
+    //     email(to, {
+    //         // Optional additional arguments
+    //         subject: subject,
+    //         body: body
+    //     }).catch(console.error)
+
+    // }
+
+    // handleApprove(){
+
+    //   this.sendEmail(APPROVAL_SUBJECT_TEXT, APPROVAL_BODY_TEXT); 
+    // }
+
+    // handleReject(){
+    //   this.sendEmail(DENIAL_SUBJECT_TEXT, DENIAL_BODY_TEXT); 
+    // }
+    
+    // handleCustom(){
+    //   this.sendEmail("",""); 
+    // }
+   
+    
+    render() {
+       
+         return (
+                <div>    
+                <Card >
+                <Card.Body>
+                <Card.Title>{this.props.section_id}</Card.Title>
+                    <h3><strong>Directory ID: </strong>  {this.props.uid}</h3>
+                    <h4><strong>Request Type: </strong> {this.props.type}</h4>
+                    <h5><strong>Student Reason: </strong> {this.props.rationale}</h5>
+                    <h6><strong>Student Email: </strong>{this.props.email}</h6>
+                    <h6><strong>Start Date: </strong>{this.props.startDate}</h6>
+                    <h6><strong>End Date: </strong>{this.props.endDate}</h6>
+                {/* <Button> Approve</Button>
+                <Button >Deny</Button>
+                <Button >Custom</Button> */}
+                </Card.Body>
+                </Card>
+
+                </div>
+             )
+    }
+   
+  
+} 
+

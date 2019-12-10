@@ -1,0 +1,6 @@
+export default {
+    courseURL: "http://course:8080",
+    attendanceURL: "http://course:8083",
+    pollingURL: "http://course:8082",
+    absenceURL: "http://course:8081"
+}

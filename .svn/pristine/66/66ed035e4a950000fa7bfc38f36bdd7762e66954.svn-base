@@ -1,0 +1,172 @@
+import React, {useState} from "react";
+import CourseCard from '../components/CourseCard'
+import {GeolocationButton} from '../components/GeolocationButton'
+import {observer} from "mobx-react-lite";
+import {useStore} from "../App";
+import {EScheduleMeeting} from "../common/model-definitions";
+
+
+export default observer(function Courses() {
+    const [course_name, set_course_name] = useState('');
+    const [educators, set_educators] = useState('');
+    const [semester, set_semester] = useState('');
+    const [students, set_students] = useState('');
+    const [sections, set_sections] = useState('');
+    const [lat, set_lat] = useState(0);
+    const [long, set_long] = useState(0);
+    const [radius, set_radius] = useState(0);
+    const [start, set_start] = useState(0);
+    const [end, set_end] = useState(0);
+
+    const store = useStore();
+    const {coursesList} = store;
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+
+        let arrayOfSections: any[] = [];
+        sections.split(',').forEach((element) => {
+            arrayOfSections.push({
+                id: element,
+            })
+        });
+
+        store.insertCourse(
+            course_name,
+            educators.split(','),
+            semester,
+            [], // TODO: remove hardcoding
+            arrayOfSections,
+            {
+                _id: null,
+                start: start,
+                type: EScheduleMeeting.discussion, // TODO: remove hardcoding
+                days: [], // TODO: remove hardcoding
+                end: end,
+                location: {
+                    lat,
+                    long,
+                    radius
+                }
+            }
+        );
+    };
+
+    // const componentDidMount = () => {
+    //     console.log("Component Mounted, initiating request to backend courses");
+    //     console.log(this.getCoursesFromApiAsync());
+    // };
+
+    let list = coursesList.map((data, index) => {
+        return (<CourseCard key={data.id} title={'courses'} reason={data.semester} course_id={data.id}/>)
+    });
+
+    return (
+        <div id='courses'>
+            <h1>Create new Course if Necessary</h1>
+            <div>
+
+                <label>
+                    Course Nam / Course ID:
+                    <input
+                        name='course_name'
+                        type='text'
+                        value={course_name}
+                        onChange={(ev) => set_course_name(ev.target.value)}
+                    />
+                </label>
+                <label>
+                    Please Enter Educators (Comma Seperated):
+                    <input
+                        name='educators'
+                        type='text'
+                        value={educators}
+                        onChange={(ev) => set_educators(ev.target.value)}
+                    />
+                </label>
+                <label>
+                    Please Enter the Current Semester:
+                    <input
+                        name='semester'
+                        type='text'
+                        value={semester}
+                        onChange={(ev) => set_semester(ev.target.value)}
+                    />
+                </label>
+                <label>
+                    Please Enter Comma Seperated List of Sections:
+                    <input
+                        name='sections'
+                        type='text'
+                        value={sections}
+                        onChange={(ev) => set_sections(ev.target.value)}
+                    />
+                </label>
+                {/* <label>
+         Please Enter a list of Sections:
+          <input  name ="students" type="text" value={sections} onChange={(ev)=>set_sections(ev.target.value}/>
+        </label> */}
+                <GeolocationButton
+                    onPositionChange={(positionCoords => {
+                        set_lat(positionCoords.latitude);
+                        set_long(positionCoords.longitude);
+                    })
+                    }
+                />
+                <label>
+                    Please enter the value for latitude that you see
+                    <input
+                        name='lat'
+                        type='text'
+                        value={lat}
+                        onChange={(ev) => set_lat(parseInt(ev.target.value))}
+                    />
+                </label>
+                <label>
+                    Please Enter the value for longitude that yous ee
+                    <input
+                        name='long'
+                        type='text'
+                        value={long}
+                        onChange={(ev) => set_long(parseInt(ev.target.value))}
+                    />
+                </label>
+                <label>
+                    Please enter a radius for your class
+                    <input
+                        name='radius'
+                        type='text'
+                        value={radius}
+                        onChange={(ev) => set_radius(parseInt(ev.target.value))}
+                    />
+                </label>
+                <br></br>
+                <label>
+                    Please enter a Start Time
+                    <input
+                        name='start'
+                        type='datetime-local'
+                        value={end}
+                        onChange={(ev) => set_end(parseInt(ev.target.value))}
+                    />
+                </label>
+                <br></br>
+                <label>
+                    Please enter a an End time
+                    <input
+                        name='end'
+                        type='datetime-local'
+                        value={start}
+                        onChange={(ev) => set_start(parseInt(ev.target.value))}
+                    />
+                </label>
+                <br></br>
+                <input type='submit' value='Submit' onClick={(ev) => handleSubmit(ev)}/>
+
+            </div>
+            {
+                list
+            }
+        </div>
+    );
+});

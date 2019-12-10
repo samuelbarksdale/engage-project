@@ -1,0 +1,102 @@
+FORMAT: 1A
+
+# Course Service
+The Course Service exposes a collection of HTTP/HTTPS RESTful API routes for the manipulation and viewing of four primary resources: Courses, Classes, Sections, Users.
+The service is currently supporting the Engage Application, acting as a central data repository for generally static data initalized by an educator once at the beginning of
+the semester. 
+
+The organizatin of the resources is as follows: 
+A course is a generic reference to a certain department curriculum. Many educators can teach a course over many different times and locations.
+A class is the instantiation of a course and refers to the lecture portion of the cirriculum. Only one primary educator (professor or lecturer) can teach a class at one time. Students are directly enrolled in a class and will thus attend it.
+Within normal usage of language, classes and courses are often used interchangably and are typically presented as the same in university class schedules, but we make a clear distinction.
+A section is the final subdivision and applies to a class. 
+
+To find out more about how these api docs were build see https://apiblueprint.org/
+
+## Data Structures
+### Class 
++ id: cmsc216A (string, required)
++ courseId: cmsc216 (string, required)
++ sections: 0101,0201 (array, required)
++ educators: lherman (array, required)
++ schedule (object, required)
+    + time (object, required)
+        + start: 12:00 (string, required)
+        + end: 13:30 (string, required)
+    + days: 1,3,5 (array, required)
+    + location (object, required)
+        + lat: `-38.0034` (string, required)
+        + lng: 75.9820 (string, required)
+        + radius: 10 (number, required)
+
+### User 
++ uid (string),
++ name (string),
++ classes (object),
+    + courseId (string),
+    + sectionId (string)
+
+
+# Group Class
+Class-related resources for the Coures API.
+
+## Class [/classes/{id}]
+
+A single Class resource. The Class resource forms the backbone of the Course service. Classes are an "instantiation" of a course with a specific educator, lecture time, unique
+sections, and a lecture location.
+Additionally, Students are also found in the Class resource.
+
+A Class resource has the following attributes:
+
++ parameters
+    + id (string)
+
+
+### Retrieve a Single Class [GET]
++ Response 200 (application/json)
+
+    + Attributes (Class)
+
+
+### List Enrolled Students [GET /classes/{id}/students]
++ Response 200 (application/json)
+
+    + Attributes (array[User])
+
+### Delete a Single Class [DELETE]
++ Response 204
+
+
+## Class Collection [/classes]
+### List all Classs [GET]
+
++ Response 200 (application/json)
+
+    + Attributes (array[Class])
+
+### Create Class [POST]
+Creates the class and assigns ownership to the educators. Upon successful creation, the newly created resourse will be returned. 
+
++ Request (application/json) 
+    
+   + Attributes (Class)
+
++ Response 200 (application/json)
+
+   + Attributes (Class)
+
+# Group User
+Routes for the User resource
+
+## User [/users/{id}]
+A single User resource. Can be authority 1 (student) or 2 (educator). We currently only support binary permissions.
+
+A User resource has the following attributes:
+
++ parameters
+    + id (string) - The user's directory id, refered to in the docs as uid for brevity. 
+    
+### Retrieve a User [GET]
++ Response 200 (application/json)
+
+    + Attributes (User)

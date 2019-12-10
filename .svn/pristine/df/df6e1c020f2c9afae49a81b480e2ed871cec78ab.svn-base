@@ -1,0 +1,147 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+
+
+const app = express();
+const port = 5656;
+
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+
+mongoose
+    .connect(
+        'mongodb://mongo:27017/course-service',
+        { useNewUrlParser: true}
+    )
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.log(err));
+mongoose.set('useFindAndModify', false);
+
+const Schema = mongoose.Schema;
+
+const pollModel = new Schema({
+    id: {type: String},
+    course_id: {type: String},
+    active_status: [{type: Date},{type: Date}],
+    question: {type: String},
+    choices: [{
+        choice_id: {type: String},
+        votes: {type: Number},
+        voters: [{student_id: {type: String}}]
+    }],
+    text_answers: [{
+        answer: {type: String},
+        student_id: {type: String}
+    }]
+});
+
+var Polls = mongoose.model('Polls', pollModel);
+
+app.get('/', (req, res) => {
+    Polls.find({}, (err, polls) => {
+        if (err) console.error(err);
+        res.json(polls);
+    });
+});
+
+app.post('/polls/', (req, res) =>{
+    var newPoll = new Polls(req.body);
+    newPoll.save();
+    res.status(201).send(newPoll);
+});
+
+app.get('/polls/courses/:course_id/', (req, res) => {
+    Polls.find({'course_id': req.params.course_id}, (err, polls) => {
+        if (err) console.error(err);
+        res.json(polls);
+    });
+});
+
+//work here too
+app.get('/polls/students/:student_id/', (req, res) => {
+    Polls.find({$or:[{'choises.student_id': req.params.student_id},{'text_answers': req.params.student_id}]},
+    // 'question active_status choices.choice_id text_answers.answer',
+    (err, polls) => {
+        if (err) console.error(err);
+        console.log(polls);
+        res.json(polls);
+    });
+});
+
+app.get('/polls/:poll_id/', (req, res) => {
+    Polls.findOne({'id': req.params.poll_id}, (err, polls) => {
+        if (err) console.error(err);
+        res.json(polls);
+    });
+});
+
+app.delete('/polls/:poll_id/', (req, res) => {
+    Polls.deleteOne({'id': req.params.poll_id}, (err) => {
+        if (err) return console.error(err);
+        return res.status(204);
+    });
+})
+
+
+//NEEDs work
+app.get('/polls/:poll_id/choices/:choice_id', (req, res) => {
+    Polls.findOne({'id': req.params.poll_id, 'choices.choice_id': req.params.choice_id},
+    // 'choices.choice_id choices.votes choices.voters',
+     (err, polls) => {
+        if (err) console.error(err);
+        var cho = polls.choices;
+        cho.map((choice) => {
+            if (choice.choice_id == req.params.choice_id) {
+                console.log('jijjijijjj');
+            }
+        })
+        res.json(polls);
+    });
+});
+
+app.put('/polls/:poll_id/choices/:choice_id', (req, res) => {
+    Polls.findOneAndUpdate({'id': req.params.poll_id, 'choices.choice_id': req.params.choice_id},
+    {$push: {'choices.$.voters': {student_id: req.body.student_id}},
+    $inc: {'choices.$.votes': 1}},
+    (err, poll) => {
+        if (err) console.error(err);
+        poll.save();
+        res.json(poll);
+    });
+});
+
+app.get('/polls/:poll_id/text', (req, res) => {
+    Polls.findOne({'id': req.params.poll_id}, 'text_answers',(err, poll) => {
+        if (err) console.error(err);
+        res.json(poll);
+    });
+});
+
+//TO DO
+// app.put('/polls/:poll_id/text', (req, res) => {
+//     Polls.findOne({'id': req.params.poll_id}, (err, poll) => {
+//         if (err) console.error(err);
+//         res.json(poll);
+//         poll.text_answer.answer = req.body.answer;
+//         poll.text_answer.student_id = req.student_id; //for now
+//         poll.save();
+//         res.json(poll);
+//     });
+// });
+
+app.put('/polls/:poll_id/courses/:course_id/', (req, res) => {
+    
+});
+
+app.delete('/polls/:poll_id/courses/:course_id/', (req, res) => {
+});
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.error(err)
+    }
+    return console.log(`Server listening on port ${port}`);
+});

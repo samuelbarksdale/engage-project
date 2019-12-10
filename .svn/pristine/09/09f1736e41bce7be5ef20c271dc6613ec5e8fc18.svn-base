@@ -1,0 +1,36 @@
+import React from 'react';
+import { ExpoConfigView } from '@expo/samples';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button
+} from 'react-native';
+import Geolocation from '../components/Geolocation'
+
+export default function SettingsScreen() {
+  /**
+   * Go ahead and delete ExpoConfigView and replace it with your content;
+   * we just wanted to give you a quick view of your config.
+   */
+  return (
+    <View style={styles.container}>
+      <Geolocation /> 
+    </View>
+  );
+}
+
+SettingsScreen.navigationOptions = {
+  title: 'app.json',
+};
+
+
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+   
+    backgroundColor: 'powderblue',
+  }
+});

@@ -1,0 +1,190 @@
+import React, { Component} from "react";
+import CourseCard from '../components/CourseCard'
+import {
+    BrowserRouter as Router,
+    Link,
+    useLocation,
+    Switch, 
+    Route
+  } from "react-router-dom";
+  import axios from 'axios';
+
+  import Dashboard from './Dashboard'; 
+  import { Form, Button, Card, Col } from 'react-bootstrap';
+  import {GeolocationButton }from '../components/GeolocationButton.jsx'
+
+
+const data = [
+  {
+    'course_id': 1,
+    'reason': 'testing reason'
+  },
+  {
+    'course_id': 2,
+    'reason': 'testing reason'
+  },
+  {
+    'course_id': 3,
+    'reason': 'testing reason'
+  }
+]; 
+
+type MyState = {course_name: string , educators: string, semester: string, students: string, sections: string};
+type MyProps = {}; 
+
+export default class Courses extends React.Component<MyProps, MyState> {
+    
+   constructor(props: any){
+     super(props); 
+     this.state = {course_name: '', educators: '', semester: '', students: '', sections: '' };
+     var partialState : any = {};
+     this.handleChange = this.handleChange.bind(this);
+     this.handleSubmit = this.handleSubmit.bind(this);
+   }
+
+    getCoursesFromApiAsync() {
+
+      console.log("here trying to fetch data from localhost data"); 
+      return fetch('http://localhost:8080/courses', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          
+        }
+      })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        console.log(" I am here with the response object"); 
+        console.log(responseJson) 
+        return responseJson;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    }
+
+    postCoursesToApi(){
+      console.log("here attempting to post the information"); 
+
+      var arrayOfEducators = this.state.educators.split(','); 
+      //var arrayOfStudents = this.state.students.split(',');
+      var arrayOfSections : any[] = []
+      this.state.sections.split(',').forEach((element) => {
+        arrayOfSections.push({
+          id: element,
+          schedule: {
+            location: {
+              Lat: 5,
+              Long: 5,
+              Radius:5             }
+          }
+        })
+      })
+
+      var postObject = {
+        course_id: this.state.course_name, 
+        educators: arrayOfEducators, 
+        sections: arrayOfSections
+
+
+      }
+      alert(JSON.stringify(postObject)); 
+      return fetch('http://localhost:8080/courses', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postObject),
+      })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        console.log(" I am here with the response object"); 
+        console.log(responseJson) 
+        return responseJson;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    }
+
+    componentDidMount(){
+      console.log("Component Mounted, initiating request to backend courses"); 
+      console.log(this.getCoursesFromApiAsync()); 
+    }
+
+   handleChange(event : any) {
+     
+    const target = event.target;
+    const value = target.value;
+    const name = target.name;
+    var partialState : any = {};
+    partialState[name] = value;
+    this.setState(partialState);
+  }
+
+  handleSubmit(event : any) {
+    
+    alert(JSON.stringify(this.state)); 
+    console.log(this.postCoursesToApi()); 
+    event.preventDefault();
+  }
+
+  handleStudentChange(event: any){
+    if(event.key == 'Enter'){
+      alert("entering student information"); 
+      const target = event.target;
+      const value = target.value;
+      const name = target.name;
+      const updatedStudentList = this.state.students + ',' + name;
+      var partialState : any = {};
+      partialState[name] = value; 
+      this.setState(partialState); 
+    }
+
+  }
+
+
+  render() {
+   
+    let list = data.map((data, index) => {
+        return (<CourseCard key={index} title={'courses'} reason={data.reason} course_id={data.course_id}/>)
+    }); 
+
+    return (
+      <div id="courses">
+        <h1>Create new Course if Necessary</h1>
+        <div>
+        
+        <label>
+          Course Nam / Course ID: 
+          <input  name ="course_name" type="text" value={this.state.course_name} onChange={this.handleChange} />
+        </label>
+        <label>
+          Please Enter Educators (Comma Seperated): 
+          <input  name ="educators" type="text" value={this.state.educators} onChange={this.handleChange} />
+        </label>
+        <label>
+          Please Enter the Current Semester: 
+          <input  name ="semester" type="text" value={this.state.semester} onChange={this.handleChange} />
+        </label>
+        <label>
+         Please Enter Comma Seperated List of Sections: 
+          <input  name ="sections" type="text" value={this.state.sections} onChange={this.handleChange}/>
+        </label>
+        {/* <label>
+         Please Enter a list of Sections: 
+          <input  name ="students" type="text" value={this.state.sections} onChange={this.handleChange}/>
+        </label> */}
+        <GeolocationButton /> 
+        <br></br>
+        <input type="submit" value="Submit" />
+      
+        </div>
+        {list}
+      </div>
+    );
+  }
+}

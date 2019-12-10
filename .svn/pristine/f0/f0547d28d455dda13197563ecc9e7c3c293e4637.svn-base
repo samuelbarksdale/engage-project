@@ -1,0 +1,11 @@
+const en = {
+    courseCard: {
+        button: "View Class",
+    },
+    tabs:{
+        courseTabText:'Courses',
+        engagementTabText:'Engagement',
+        absenceRequestsTabText:'Absence Requests'
+    }
+};
+export default en;

@@ -1,0 +1,50 @@
+import * as WebBrowser from 'expo-web-browser';
+import React from 'react';
+import {
+    StyleSheet,
+    View,
+} from 'react-native';
+import {
+    Text
+} from 'react-native-elements'
+
+import {MonoText} from '../components/StyledText';
+import CourseCard from "../components/CourseCard";
+import {NavigationScreenProp} from "react-navigation";
+import {courses_data, ICourse} from "../store";
+import {checkType} from "../tsUtils";
+import {ICoursesStackRoutes} from "../navigation/MainTabNavigator";
+
+export interface CourseScreenProps {
+    courseId: ICourse['id']
+}
+
+type ExtendedProps = {
+    navigation: NavigationScreenProp<null, CourseScreenProps>
+}
+
+export default function CourseScreen({navigation}: ExtendedProps) {
+    const course = courses_data.find(x => x.id == navigation.getParam('courseId'));
+
+    if (!course) {
+        return <View>
+            <Text>Course not found</Text>
+        </View>
+    }
+    return (
+        <View style={styles.container}>
+            <CourseCard
+                key={course.id}
+                courseName={course.course_name}
+                educators={course.educators[0]}
+                semester={course.semester}
+            />
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    }
+});

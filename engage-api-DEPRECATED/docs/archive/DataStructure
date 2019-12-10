@@ -1,0 +1,120 @@
+Engage Data
+
+Uploaded Roster CSV has form:
+Each meeting time will have its own unique tag
+	a MWF class will have one unique tag per day, three total
+	
+Classes/Objects
+Key
+[] means array of data
+{} means object
+[{}] means list of objects
+
+Users Table
+User {
+	"name":"student1",
+	"uid": "123456789",
+	"type": "student",
+	"CAS": {}, //any necessary authentication data for the user
+	"classes": [{Class}], //for students and professors switching between classes and sections
+	"meetings": [{Meeting}] //to view their attendance/absence. If their uid is not present in the "attendances"/"absences" field, they were not present
+}
+
+Classes Table
+Class { //really its by section since different users (professors) can teach different sections of the same course, but one professor shouldn't see another professor's data
+	"course_name": "CMSC435",
+	"section": "0101",
+	"prof": "Larry Herman",
+	"semester": "fall2019",
+	"topics": [], //all topics covered in this course
+	"Schedule: {
+		"days": [M,W,F], //can be M,T,W,H,F
+		"time": {start, end},
+		"meetings": [{unique_meeting_id}]  //for each deleted meeting or updated schedule, we must edit each user's "meetings" field
+	},
+	"location": {latitude, longitude, radius},
+	"roster": [{User}]
+}
+
+Meetings Table
+Meeting {
+	"unique_meeting_id": "11/6/19.CMSC435.0101" //some deliminator such as a '.' ; unnecessary if we can just point to this object from another table ; assumes a section will only have one class per day
+	"date": "11/6/19",
+	"day": "W",
+	"class": {Class}, //so we can get schedule and location data
+	"attendances": [uid, uid,...], //or the entire Attendance object, though this seems like unnecessary duplication
+	"absences": [uid, uid, ...], //or entire Absence object
+	"topics_covered": [], //must correspond to Class.topics[]
+}
+
+Attendances Table
+Attendance {
+	"uid": "123456789"
+	"unique_meeting_id": "11/6/19.CMSC435.0101",
+	"time_stamp":
+	"location": {lat, long},
+	"valid": TRUE //if a submitted attendance is VALID, the user's name will be put in the "attendances" field of the Meeting
+}
+
+Absences Table
+Absence {
+	"uid": "123456789"
+	"missed_days": ["11/4/19.CMSC435.0101", "11/6/19.CMSC435.0101"],
+	"time_stamp":
+	"reason": "Doctor",
+	"rationale": "I was sick and went to doctor",
+	"proof": proof.jpeg,
+	"status": "Approved" //unlike attendance, all absences will appear on the list of absences, some with approval, some without
+}
+
+Polling Table
+Polling {
+    id: {type: String},
+    course_id: {type: String},
+    status: {type: String},
+    creator: {type: String},
+    question: {type: String},
+    type: String,
+    choices: [{
+        choice: {type: String},
+        choice_id: {type: String},
+        votes: {type: Number},
+        voters: [{uid: {type: String}}]
+    }],
+    text_answers: [{
+        answer: {type: String},
+        uid: {type: String}
+    }]
+}
+	
+
+
+
+
+
+
+
+
+
+
+
+Old Shit ->
+
+Courses Table
+**these next objects are nested
+Course {
+	"name": "CMSC435",
+	"semester": "fall2019",
+	"sections": [{Section}]
+}
+Section {
+	"name": "0101",
+	"prof": "Larry Herman",
+	"roster": [{User}], //or uid's to then look up in Users Table
+	"classes": [{Class}] //or unique_meeting_id's to look up in separate table
+}
+
+Classes Table (used by both Users and Courses tables, so we should make it its own table)
+Class {
+	"unique_id": "something_unique",
+	"day": "M" //M,T,W,H,F as options

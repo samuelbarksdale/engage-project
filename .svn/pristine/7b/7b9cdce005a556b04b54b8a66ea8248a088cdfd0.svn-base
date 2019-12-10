@@ -1,0 +1,159 @@
+import path from 'path';
+import _ from 'lodash';
+import config from './config';
+import axios from 'axios';
+
+const coursePORT = process.env.COURSE_PORT
+const courseServiceUrl = `http://course:${coursePORT}`;
+
+async function getUser(uid) {
+    const endpoint = `/users/${uid}`;
+    try {
+        let user = await axios.get(courseServiceUrl + endpoint);
+        return user.data;
+    } catch (e) {
+        if(e.response.status === 404) throw new Error("The uid does not refer to an existing user");
+        throw new Error("Internal Server Error")
+    }
+}
+async function isEducator(uid, user={}) {
+    if (Object.keys(user).length === 0) {
+        user = await getUser(uid);
+    }
+        
+    return user.type === 2;
+}
+
+export default function Routes(app, ctx) {
+    const LEC = 'LEC';
+    const DIS = 'DIS';
+    const OTH = 'OTH';
+
+
+    function distance(lat1, lng1, lat2, lng2) {
+        let R = 6371e3; // meters
+        lat1 = lat1.toRadians();
+        lat2 = lat2.toRadians();
+        lng1 = lng1.toRadians();
+        lng2  = lng2.toRadians();
+
+        let phi = (lat2-lat1).toRadians();
+        let lam = (lng2-lng1).toRadians();
+        let a = Math.sin(phi/2) * Math.sin(phi/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(lam/2) * Math.sin(lam/2);
+        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        let d = R * c;
+        return d;
+    }
+
+
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../public"),
+        }
+        res.sendFile('./index.html', options)
+
+    }
+
+    async function getAttendance(req, res) {
+        let isEducator = await isEducator(req.body.uid);
+        if (!isEducator) res.status(400).end();
+        
+        const {page, sort, student_id, section_id, course_id, type, start, end} = req.query
+
+        const timestamp = {};
+        const query = {};
+        if (student_id) Object.assign(query, {student_id})
+        if (section_id) Object.assign(query, {section_id: section_id.toUpperCase()})
+        if (course_id) Object.assign(query, {course_id: course_id.toUpperCase()})
+        if (type) Object.assign(query, {type: type.toUpperCase()})
+        if (start) timestamp["$gte"] = start
+        if (end) timestamp["$lte"] = end
+        if (!_.isEmpty(timestamp)) Object.assign(query, {timestamp})
+
+        try {
+            let result = await ctx.db.collection('attendance').find(query)
+            // Pagination and sort will happen here
+            const results = await result.toArray();
+            return res.json(results);
+        } catch (e) {
+            console.error(e)
+            return res.status(500).end();
+        }
+ 
+    }
+
+    async function logAttendance(req, res) {
+        const {uid, section_id, type} = req.body;
+        const Radius = 200;
+        if (!uid|| !section_id || !type) return res.status(400).json({message: "Must provide uid, section_id, and type in body"})
+        if (type != LEC && type != DIS && type != OTH) return res.status(400).end()
+
+        
+        const endpointUser = `/students/${uid}`;
+        const endpointSection = `/sections/${section_id}`;
+        try {
+            let response = await axios.get(config.courseServiceUrl + endpointUser);
+            let user = response.data;
+            if (!user) return res.status(400).json({message: "Invalid uid"});
+            response = await axios.get(config.courseServiceUrl + endpointSection);
+            let scheduleId = response.data.schedule;
+            const endpointSchedule = `/schedules/${scheduleId}`;
+            response = await axios.get(config.courseServiceUrl + endpointSchedule);
+            let {timeStart, timeEnd, days} = response.data;
+
+            
+
+            let courseLocation = response.data.location;
+            let studentLocation = req.body.location;
+            let distance = distance(courseLocation.lat, courseLocation.lng, studentLocation.lat, studentLocation.lng);
+            if (distance > Radius) return res.sendStatus(200);
+
+            let courseRe = /^(\w+)\-/;
+            let course_id = courseRe.exec(section_id)[1];
+            if (!user.classesCurrent.include(course_id)) return res.status(400)
+
+            let now = new Date();
+            
+            const timestamp = now.getTime();
+            const log = {
+                "uid": uid,
+                "timestamp": timestamp,
+                "section_id": section_id,
+                "course_id": course_id,
+                "meeting_type": type
+            };
+            try {
+                let result = await ctx.db.collection("attendance").insertOne(log)
+                let newLog = result.ops
+                res.json(newLog)
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end()
+            }
+        
+        } catch(e) {
+
+        }
+
+
+    }
+
+    async function deleteAttendance(req, res) {
+        try {
+            await ctx.db.collection("attendance").deleteMany({});
+            res.status(204).end()
+        } catch(e) {
+            console.error(e)
+            res.status(500).end();
+        }
+    }
+
+    app.get('/', serveDocs);
+    app.route('/attendance')
+        .get(getAttendance)
+        .post(logAttendance)
+        .delete(deleteAttendance)
+}
+

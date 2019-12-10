@@ -1,0 +1,75 @@
+import mongoose from 'mongoose';
+import {UserModel} from "../schemas/userSchema";
+import { LectureModel } from '../schemas/classSchema';
+
+export default {
+    listClasses: async function(req, res) {
+        try {
+            let did = req.params.id === 'me' ? req.session.cas.user : req.params.id;
+            let user = await UserModel.findOne({did}).exec()
+            if (!user) return res.sendStatus(404)
+            let filter = {}
+            if (user.authority == 'ADMIN') {
+                filter = {educator: did};
+            } else {
+                filter = {lectureName: {$in: user.lectures}}
+            }
+            let classes = await UserModel.find(filter).exec();
+            return res.json(classes);
+        } catch (e) {
+            res.sendStatus(500)
+        }
+    },
+    me: async function(req, res) {
+        let did = req.session.cas.user;
+        let user = await UserModel.findOne({did}).exec();
+        return res.json(user);
+    },
+    myClasses: async function(req, res) {
+        let did = req.session.cas.user;
+        let user = await UserModel.findOne({did}).exec();
+        let classes = [];
+        if (user.authority === "ADMIN") {
+            classes = await LectureModel.find({educators: did}).exec();
+        } else {
+            classes = await LectureModel.find({courseName: {$in: user.courses}}).exec();
+        }
+        return res.json(classes);
+    },
+    list: async function(req, res) {
+        let {courseId, classId, sectionId} = req.query;
+        
+        let filter = {};
+        if (courseId) filter = Object.assign(filter, {courseId});
+        if (classId) filter = Object.assign(filter, {classId});
+        if (sectionId) filter = Object.assign(filter, {sectionId})
+
+        try {
+            let users = await UserModel.find(filter).exec();
+            return res.json(users);
+        } catch (e) {
+            console.error(e);
+            return res.sendStatus(500);
+        }
+    },
+    retrieve: async function(req, res) {
+        let uid = req.params.id;
+        try {
+            let user = await UserModel.findOne({uid}).exec();
+            return res.json(user);
+        } catch (e) {
+            return res.setStatus(500);
+        }
+    },
+    create: async function(req, res) {
+        let larry = new UserModel({
+            uid: 1,
+            did: "lherman",
+            name: "Larry Herman",
+            authority: "ADMIN"
+        })
+        await larry.save();
+        
+    }
+
+}

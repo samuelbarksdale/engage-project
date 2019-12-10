@@ -1,0 +1,128 @@
+import path from 'path';
+import _ from 'lodash';
+import config from './config';
+import axios from 'axios';
+import {isEducator, getUser, distance} from './utils'
+
+export default function Routes(app, ctx) {
+    const LEC = 'LEC';
+    const DIS = 'DIS';
+    const OTH = 'OTH';
+
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../public"),
+        }
+        res.sendFile('./index.html', options)
+
+    }
+
+    async function getAttendance(req, res) {
+        let check;
+        const query = {};
+        try {
+            check = await isEducator(req.body.uid);
+        } catch (e) {
+            return res.status(400).json({message: e.message})
+        }
+        
+
+        const {uid, section_id, course_id, type, start, end} = req.query
+        const timestamp = {};
+
+        if (uid) Object.assign(query, {uid})
+        if (section_id) Object.assign(query, {section_id: section_id.toUpperCase()})
+        if (course_id) Object.assign(query, {course_id: course_id.toUpperCase()})
+        if (type) Object.assign(query, {type: type.toUpperCase()})
+        if (start) timestamp["$gte"] = start
+        if (end) timestamp["$lte"] = end
+        if (!_.isEmpty(timestamp)) Object.assign(query, {timestamp})
+        if (!check) query.uid = req.body.uid;
+        console.log(query)
+        try {
+            let result = await ctx.db.collection('attendance').find(query)
+            // Pagination and sort will happen here
+            const results = await result.toArray();
+            return res.json(results);
+        } catch (e) {
+            console.error(e)
+            return res.status(500).end();
+        }
+ 
+    }
+
+    async function logAttendance(req, res) {
+        const {uid, section_id, type} = req.body;
+        if (!uid|| !section_id || !type) return res.status(400).json({message: "Must provide uid, section_id, and type in body"})
+        if (type != LEC && type != DIS && type != OTH) return res.status(400).end()
+
+        
+        try {
+            let user = await getUser(uid);
+            let classObj = user.classesCurrent.find(c => {
+                return c.sectionId === section_id;
+            })
+            if (!classObj) return res.status(400).json({message: "Provided user not in provided section"});
+            
+            let endpoint = "";
+            if (type === LEC) endpoint = `/courses/${classObj.courseId}`
+            else if (type === DIS) endpoint = `/sections/${classObj.sectionId}`
+            let response = await axios.get(config.courseServiceUrl + endpoint);
+
+            let courseLocation = response.data.schedule.location;
+            let radius = courseLocation.radius;
+            let studentLocation = req.body.location;
+            // Apply the haversine distance formula
+            let cLat = parseFloat(courseLocation.lat);
+            let cLong = parseFloat(courseLocation.long);
+            let sLat = parseFloat(studentLocation.lat);
+            let sLong = parseFloat(studentLocation.long);
+            let dist = distance(cLat, cLong, sLat, sLong);
+            if (dist > radius) return res.sendStatus(400).json({message: "Not in range"});
+
+            let course_id = classObj.courseId;
+            let now = new Date();
+            
+            const timestamp = now.getTime();
+            const log = {
+                "uid": uid,
+                "timestamp": timestamp,
+                "section_id": section_id,
+                "course_id": course_id,
+                "meeting_type": type
+            };
+            try {
+                let result = await ctx.db.collection("attendance").insertOne(log);
+                let newLog = result.ops;
+                return res.json(newLog);
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end()
+            }
+        
+        } catch(e) {
+            console.error(e)
+            res.sendStatus(500);
+        }
+
+
+    }
+
+    async function deleteAttendance(req, res) {
+        try {
+            await ctx.db.collection("attendance").deleteMany({});
+            res.status(204).end()
+        } catch(e) {
+            console.error(e)
+            res.status(500).end();
+        }
+    }
+
+    app.get('/', serveDocs);
+    app.get('/attendance', getAttendance)
+    app.route('/attendance')
+       
+        .post(logAttendance)
+        .delete(deleteAttendance)
+}
+

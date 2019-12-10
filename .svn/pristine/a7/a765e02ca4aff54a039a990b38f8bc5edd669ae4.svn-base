@@ -1,0 +1,271 @@
+User and Course Service API Definition
+
+Data Structures
+User {
+	“_id”: (id)
+	"name": (string",
+	"uid": (string),
+	"type": enum{student, educator},
+	"CAS": {}, //any necessary authentication data for the user
+	"classes_current": [(id)], //for students and professors switching between classes and sections
+	“classes_past”: [(id)], //to view old data
+	“connected”: boolean //false until the student creates an account (internal field only)
+}
+
+User_classes {
+	“Class_ids”: [id,id,...]
+}
+
+Mongoose Schema
+var userSchema = new Schema({
+	_id: Schema.Types.ObjectId,
+	name: String,
+	uid: String,
+	type: Number, //STUDENT=1, EDUCATOR=2
+	classesCurrent: [String],
+	classesPast: [String]
+})
+
+EXAMPLE USER OBJECT
+{
+	"uid": "araveesh",
+	"name": "Aishu Raveesh",
+	"type": 1,
+	"classesCurrent": ["MATH100", "ENGL498", "CMSC250"],
+	"classesPast": []
+}
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+Courses Group
+//really its by section since different users (professors) can teach different sections of the same course, but one professor shouldn't see another professor's data
+
+course { 
+	“id”: (id)
+	"course_name": "CMSC435",
+	"sections": [Section {
+		"id": (id)
+		“TA”: (string)
+		"Schedule”: [{
+			“Type”: enum{lecture, discussion, other}
+			"days": [M,W], //can be M,T,W,H,F
+			"time": {start, end},
+			"location": {latitude, longitude, radius},
+		},
+		{
+			“type” : discussion,
+			“days”:[F],
+			"time": {start, end},
+			"location": {latitude, longitude, radius},
+		}]
+		"roster": [string,string] //changing this to UIDs. This will solve the problem of the overlap with the User Objects
+	}]
+	"educators": [(string)]
+	"semester": (string),
+	"topics": [], // Return by ?includes=topics parameter
+}
+
+Class_Roster {[
+	“Section_id”: (id),
+	“Roster”: [user_id,user_id]
+],
+	“Section_id”: (id),
+	“Roster”: [user_id,user_id]
+],...}
+
+Mongoose Schemas
+var courseSchema = new Schema({
+	_id: Schema.Types.ObjectId,
+	id: Number,
+	name: String,
+	educators: [String],
+	semester: String,
+	topics: [{date: Date, topicsCovered: [String]}], //Date is going to be stored as 'year-month-day', EX: '2019-11-19'
+	sections: [Schema.Types.ObjectId]
+})
+
+var sectionSchema = new Schema({
+	_id: Schema.Types.ObjectId, //ObjectId referenced in courseSchema.sections
+	id: Number,
+	name: String,
+	ta: [String],
+	roster: [uid] //useful student user data
+	schedule: [{
+		type: String, //lecture, discussion, other ENUM
+		days: [String], //M,T,W,H,F DayEnum defined below
+		timeStart: Decimal128, //Date type is not appropriate since we just want the hour. EX: 14.25 = 2:15PM
+		timeEnd: Decimal128,
+		location: {lat: Decimal128, long: Decimal128}
+	}]
+})
+var DayEnum = {
+    M: 1,
+    T: 2,
+    W: 3,
+    Th:4,
+    F: 5
+}
+var ClassTypeEnum = {
+	LECTURE: 1,
+	DISCUSSION: 2,
+	OTHER: 3
+}
+
+var courseRosterSchema = new Schema({
+	roster: [{section_id: Number, section_name: String, roster: [{id: Number, uid: String, name: String}]}]
+}) 
+
+
+EXAMPLE COURSE OBJECT (CMSC435)
+cmsc435: {
+	"_id": 1,
+	"id:": 1,
+	"name": "CMSC435",
+	"educators": ["jpurtillo","araveesh"],
+	"semester": "Fall2019",
+	"topics": [{date: '2019-11-19', topicsCovered:["Intellectual Property", "Lab"]}, {date: '2019-11-22', topicsCovered:["CDR"]}],
+	"sections": [10,11]
+}
+section0101: {
+	"_id": 10,
+	"name": "0101",
+	"ta": ["araveesh"],
+	"roster": ["mskopic", "nendy"],
+	"schedule": [100, 200]
+}
+section0110: {
+	"_id": 11,
+	"name": "0110",
+	"ta": ["araveesh"],
+	"roster": ["aravi"],
+	"schedule": [100]
+}
+
+schedule100: {
+	_id: 100,
+    type: 1, //ClassTypeEnum
+    days: [2,4], //DayEnum
+    timeStart: 14.0,
+    timeEnd: 15.25,
+    location: {
+        lat: 38.990104, 
+        long: -76.936399
+    }
+}
+schedule200: {
+	_id: 200,
+    type: 2, //ClassTypeEnum
+    days: [5], //DayEnum
+    timeStart: 12.5,
+    timeEnd: 13.75,
+    location: {
+        lat: 38.990104, 
+        long: -76.936399
+    }
+}
+
+---------------------------------------------------------------------------------------------------------	
+
+***Assuming current semester, unless otherwise specified***
+1.  Service shall expose a route to read all courses by user id. (GET)
+2.  Service shall expose a route to read a user’s data (GET)
+3.  Service shall expose a route to read all students by course id. (GET) (returns roster)
+4.  Service shall expose a route to create a course with a name, sections, locations, (GPS coordinates) times, and student rosters. (POST)
+5.  Service shall expose a route to update a course's name, times, locations (GPS coordinates), sections, and student rosters. (PUT)
+6.  Service shall expose a route to delete a course and all related data. This includes data related to that course in other services. (DELETE)
+7.  Service shall expose a route to create course schedules. (POST) (built into course creation)
+8.  Service shall expose a route to update course schedules. (PUT) (built into course updating)
+9.  Service shall expose a route to create a new user (POST)
+10. Service shall expose a route to update a user’s data (PUT)
+11. Service shall expose a route to update a roster by removing one or all students (PUT)
+12. Service shall expose a route to delete a user (DELETE)
+13. Read course data from previous semesters (GET)
+14. Get all topics for a course (GET)
+	
+API Endpoints
+POST /courses
+	Description: Create a course with name, sections, and schedules. NOTE: To Update, delete old
+		course first.
+	Arguments: Course object with Section details
+		Required: id (not mongo's _id field). Unique id generated on the front-end. course.sections, and course.sections.schedule since these are the required objects (they can be empty arrays)
+	Reponse: Created course object OR Duplicate id error OR Error message due to incompatible or missing fields
+
+GET /courses/:id
+	Description: Get a course object with id. All sub objects will be nested in the response
+		(fields with type ObjectID will be replaced by the actual object referenced)
+	Response: full course object OR Error: id does not exist OR Error: database error
+
+DELETE /courses/:id
+	Description: Remove a class from the database, as well as all associated data in other services
+	Arguments: none
+	Response: Success object OR error message due to invalid/missing course_id
+
+GET /courses/:id/sections
+	Description: get all section objects associated with a course
+	Response: list of section objects
+{
+	"all_sections":[{Section}, {Section},...]}
+}
+
+GET /courses/:id/sections/:id
+	Description: get single section object including optional schedule and roster
+	Response: section object associated with id
+
+
+DELETE /courses/:id/removeUser/:id
+		Description: Remove a single student or educator from a class (assumes TA’s
+			and professors are part of the roster, which is the case on ELMS. Larry’s
+			data will inform this function, if he and his TA’s are in the roster)
+		Arguments: Required: student or educator “id”
+		Response: updated class object with new roster OR error message due to invalid/missing fields
+____________________________________________________________________________
+
+POST /users
+	Description: Create a new user. Will not create duplicate user, but will replace all fields with request body.
+		This means that any unincluded fields will be saved as null, except the class objects which will be empty	
+	Arguments: User object, Required: uid
+	Response: Created User object OR Error due to missing/invalid fields (400),
+		or Error due to unauthorized creation (401)
+	
+GET /users
+	Description: Get a list of all user JSON objects as a list
+	Arguments: none
+	Response: Array of user JSON objects
+
+GET: /users/:uid
+	Description: get a user’s data
+	Arguments: none
+	Response: user object OR error message due to invalid user_id
+
+DELETE: /users/:uid
+	Description: delete a user from the database, including from all course.section.roster
+	Arguments: none
+	Response: Success message OR error message due to invalid user_id
+		
+GET /users/:uid/courses
+	Description: get all current courses of the specified user
+	Arguments: Optional: ?active=true
+	Response: User_classes object, a list of all class_ids associated with the student
+		in the given semester
+
+Private:
+GET /deleteUsers
+	Description: Will delete all user documents from the database. For testing purposes only!!
+
+
+Removed:
+PUT /users/:uid
+	Description: update any fields of the specified user. Note: uid can be changed due to immutable _id field
+	Arguments: user object with updated fields
+	Response: updated user object OR error message due to invalid arguments (400)
+		or Error due to unauthorized creation (401)
+
+GET /courses/:id/rosters
+	Description: get the roster of an entire course
+	Arguments: none
+	Response: courseRoster object OR Error message due to invalid course_id, section_id’s
+
+PUT /courses/:id
+	Description: Update any field of the Course object. Other fields will be unchanged
+	Arguments: Course JSON file with updated fields changed
+	Response: Updated course object OR Error message due to incompatible data

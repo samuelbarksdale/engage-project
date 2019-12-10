@@ -1,0 +1,45 @@
+import React from 'react';
+import CourseForm from '../components/CourseForm'
+import { Container, Alert } from 'react-bootstrap';
+
+export default class Settings extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.state = {alert: {show: false, type: "", message: ""}}
+        this.showAlert = this.showAlert.bind(this);
+        this.hideAlert = this.hideAlert.bind(this);
+    }
+
+    showAlert(type, message) {
+        this.setState({alert: {show: true, type, message}})
+    }
+    hideAlert() {
+        this.setState({alert: {show: false, type: "", message: ""}})
+    }
+    render() {
+        return (
+  
+                <div>
+                    {this.state.alert.show && 
+                        <Alert 
+                            variant={this.state.alert.type} 
+                            onClose={this.hideAlert}
+                            dismissible
+                        >
+                            {this.state.alert.message}
+                        </Alert>
+                    }
+                    <h3 className="text-center mt-4">Settings</h3>
+                    <Container>
+                        <h4>Setup a Course</h4>
+   
+                        <CourseForm showAlert={this.showAlert} />
+          
+                    </Container>
+                    
+                </div>
+            
+        );
+    }
+}

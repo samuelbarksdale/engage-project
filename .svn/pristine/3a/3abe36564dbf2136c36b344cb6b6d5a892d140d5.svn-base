@@ -1,0 +1,38 @@
+export interface ICourse {
+    id: string;
+    course_name: string;
+    sections: ISection[]; 
+    educators: string[];
+    semester: string;
+    topics: []
+}
+
+export interface ISection {
+    id: string, 
+    TA: string,
+    roster: string[] //changing this to UIDs. This will solve the problem of the overlap with the User Objects
+
+}
+
+export interface ISchedule {
+    Type: string,
+    days: [],
+    time: [],
+    location: []
+}
+
+export const courses_data: ICourse[] = [
+    {
+        id: '1',
+        'course_name': 'CMSC135 - 1',
+        'educators' : ["Jim Purtilo"],
+        'sections': [{
+            'id' : '0101', 
+            'TA' : 'Prashant', 
+            'roster' : ["123456789"]
+        }],
+        'semester' : '(2019)',        
+        'topics': []
+    },
+    
+];

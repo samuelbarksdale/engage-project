@@ -1,0 +1,39 @@
+version: '3'
+services:
+  admin:
+    build: ./client/engage-admin
+    ports:
+      - 3000:3000
+    volumes:
+      - ./client/engage-admin/:/app
+      - /app/node_modules
+    depends_on:
+      - server
+  student:
+    build: ./client/engage-student
+    ports:
+      - 4000:3000
+    volumes:
+      - ./client/engage-student/:/app
+      - /app/node_modules
+    depends_on:
+      - server
+  server:
+    build: ./server
+    env_file:
+      - configuration/development.env
+    ports:
+      - 8080:8080
+    volumes:
+      - ./server/:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
+    volumes:
+      - data:/data/db
+    ports: 
+      - 27017:27017
+volumes:
+  data:

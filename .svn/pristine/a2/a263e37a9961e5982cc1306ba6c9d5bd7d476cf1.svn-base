@@ -1,0 +1,76 @@
+import axios from 'axios';
+import config from './config.js';
+
+
+function handleResponse(res) {
+    if (res.status < 300) return {data: res.data};
+    else if (res.status < 500) return {error: res.data.message}
+    else return {error: "Oops, an unexpected error occured!"}
+}
+
+async function getUser(did) {
+    let res = await axios.get(config.backendUrl + "/user/"+ did);
+    if (res.status < 300) {
+        return res.data;
+    }
+}
+
+async function getMe() {
+    let res = await axios.get(config.backendUrl + "/me");
+    return handleResponse(res);
+}
+
+async function getMyClasses() {
+    let res = await axios.get(config.backendUrl + "/me/classes");
+    return handleResponse(res);
+}
+
+async function GetMyCourse() {
+    let res = await axios.get(config.backendUrl + "/me/courses");
+    return handleResponse(res)
+}
+
+async function createCourse(body) {
+    let res = await axios.post(config.backendUrl + "/classes", body);
+    if (res.status < 300) return true;
+}
+
+async function updateCourse(body) {
+    let res = await axios.put(config.backendUrl + "/classes", body);
+    if (res.status < 300) return true;
+    console.log(res.data.message)
+}
+
+async function getAttendance() {
+    let res = await axios.get(config.backendUrl + "/attendance");
+    if (res.status < 300) return res.data;
+    return false
+}
+
+async function createPoll(body) {
+    let res = await axios.post(config.backendUrl + "/polls", body);
+    if (res.status < 300) return res.data;
+    return false
+}
+
+async function getPolls() {
+    let res = await axios.get(config.backendUrl + "/polls");
+    if (res.status < 300) return res.data;
+    return false
+}
+
+async function getAttendanceByDid(did){
+    let res = await axios.get(config.backendUrl + "/attendance/" + did);
+    if (res.status < 300) return res.data;
+    return false
+}
+
+async function getAbsences(){
+    let res = await axios.get(config.backendUrl + "/absences");
+    if (res.status < 300) return res.data;
+    return false
+}
+
+export default {getUser, getMe, createCourse, getAttendance, 
+    getMyClasses, createPoll, getPolls, getAttendanceByDid,
+    getAbsences, GetMyCourse}

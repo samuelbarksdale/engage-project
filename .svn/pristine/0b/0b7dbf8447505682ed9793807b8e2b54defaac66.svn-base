@@ -1,0 +1,251 @@
+import {LectureModel, SectionModel} from "../schemas/classSchema";
+import { UserModel } from "../schemas/userSchema";
+import { Mongoose } from "mongoose";
+import { parseTime, padWithZero } from "../helpers/utils";
+import ServerError from '../helpers/ServerError'
+
+export default {
+    
+    list: async function(req, res) {
+        let filter = {}
+        filter = Object.assign(req.query, filter);
+        let result = await LectureModel.find(filter).exec();
+        return res.json(result)
+    },
+    create: async function(req, res) {
+        const { 
+            courseName,
+            tas,
+            roster,
+            lectures,
+            sections
+        } = req.body;
+        //console.log(req.body);
+        //return res.send('200');
+
+        try {
+            let educator = await UserModel.findOne({did: req.session.cas.user}).exec();//
+            //return res.send('200');
+            if (!educator || educator.authority !== 'ADMIN') throw new ServerError("You must be an educator to setup a course!", 400)
+            const filteredTas = tas.filter(ta => ta && ta !== '');
+            let registeredTACount = await UserModel.count({did: {$in: filteredTas}, authority: "ADMIN"}).exec();
+            if (registeredTACount !== filteredTas.length) throw new ServerError("You provided TAs which have not been registered in the system", 400);
+            let educators = [educator.did].concat(filteredTas);
+
+            const strDays2NumDays = days => days.map(day => ['M','T','W','Th','F'].indexOf(day) + 1);
+            const newSchedule = ({start, end, days, lat, lng, radius}) => ({
+                time: {start: parseTime(start), end: parseTime(end)}, 
+                days: strDays2NumDays(days), 
+                location: {lat, lng, radius}
+            });
+            let sectionObjs = sections.map(({sectionId,lecture,start,end,days,lat,lng,radius}) => {
+                if (!(SectionModel.findOne({sectionId: sectionId}))) {
+                    return new SectionModel({
+                        sectionId: `${courseName}-${padWithZero(sectionId, 4)}`,
+                        courseName,
+                        lectureName: `${courseName}-${lecture}`,
+                        schedule: newSchedule({start, end, days, lat, lng, radius})
+                    })
+                }
+            });
+
+
+            let lectureObjs = lectures.map(({lecture, start, end, days, lat, lng, radius}) => {
+                console.log("\n\n\n\n\n"+ courseName);
+                if (!(LectureModel.findOne({lectureName: `${courseName}-${lecture}`}))) {
+                    return new LectureModel({
+                        educators,
+                        courseName,
+                        lectureName: `${courseName}-${lecture}`,
+                        schedule: newSchedule({start, end, days, lat, lng, radius})
+                    })
+                }
+            });
+
+            let sectionMap = sectionObjs.reduce((acc, doc) => {
+                if (acc[doc.sectionId]) return acc;
+                acc[doc.sectionId] = {lectureName: doc.lectureName, courseName: doc.courseName};
+                return acc;
+            }, {})
+
+
+            await Promise.all(roster.map(async ({name, uid, did, email, section}) => {
+                let fullSection = `${courseName}-${padWithZero(section, 4)}`
+                
+                let registeredUser = await UserModel.findOne({did}).exec();
+                let details = sectionMap[fullSection];
+
+                if (!details) return
+                if (!registeredUser) {
+                    let newUser = new UserModel({
+                        name,
+                        uid,
+                        did,
+                        email,
+                        sections: fullSection,
+                        lectures: details.lectureName,
+                        courses: details.courseName,
+                        authority: "STUDENT"
+                    });
+
+                    return await newUser.save();
+                } else {
+                    return await UserModel.updateOne(
+                        {_id: registeredUser._id}, 
+                        {$set: {
+                            lectures: details.lectureName,
+                            courses: details.courseName,
+                            sections: fullSection}},
+                        /*{$addToSet: {
+                                lectures: details.lectureName, 
+                                courses: details.courseName, 
+                                sections: fullSection
+                        }},*/
+                        {upsert: true}
+                    );
+                }
+            }));
+            console.log(lectureObjs);
+            console.log(sectionObjs);
+            if (!(!lectureObjs || lectureObjs.length == 0)) {
+                let lecturesDocs = await LectureModel.insertMany(lectureObjs);
+            }
+            if (!(sectionObjs || sectionObjs.length == 0)) {
+                let sectionsDocs = await SectionModel.insertMany(sectionObjs);
+            }
+
+            res.sendStatus(204);
+        } catch (e) {
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+        }
+    },
+    updateCourse: async function(req, res) {
+        const { 
+            courseName,
+            tas,
+            roster,
+            lectures,
+            sections
+        } = req.body;
+        //testing data for new endpoints
+        console.log(req.body);
+        return res.send('200');
+
+        try {
+            let educator = await UserModel.findOne({did: req.session.cas.user}).exec();//req.session.cas.user
+            if (!educator || educator.authority !== 'ADMIN') throw new ServerError("You must be an educator to setup a course!", 400)
+            const filteredTas = tas.filter(ta => ta && ta !== '');
+            let registeredTACount = await UserModel.count({did: {$in: filteredTas}, authority: "ADMIN"}).exec();
+            if (registeredTACount !== filteredTas.length) throw new ServerError("You provided TAs which have not been registered in the system", 400);
+            let educators = [educator.did].concat(filteredTas);
+
+            /*const strDays2NumDays = days => days.map(day => ['M','T','W','Th','F'].indexOf(day) + 1);
+            const newSchedule = ({start, end, days, lat, lng, radius}) => ({
+                time: {start: parseTime(start), end: parseTime(end)}, 
+                days: strDays2NumDays(days), 
+                location: {lat, lng, radius}
+            });
+            let sectionObjs = sections.map(({sectionId,lecture,start,end,days,lat,lng,radius}) => 
+                    new SectionModel({
+                        sectionId: `${courseName}-${padWithZero(sectionId, 4)}`,
+                        courseName,
+                        lectureName: `${courseName}-${lecture}`,
+                        schedule: newSchedule({start, end, days, lat, lng, radius})
+                    })
+            );
+
+
+            let lectureObjs = lectures.map(({lecture, start, end, days, lat, lng, radius}) => {
+                return new LectureModel({
+                    educators,
+                    courseName,
+                    lectureName: `${courseName}-${lecture}`,
+                    schedule: newSchedule({start, end, days, lat, lng, radius})
+                })
+            });
+
+            let sectionMap = sectionObjs.reduce((acc, doc) => {
+                if (acc[doc.sectionId]) return acc;
+                acc[doc.sectionId] = {lectureName: doc.lectureName, courseName: doc.courseName};
+                return acc;
+            }, {})*/
+
+            //remove all users that aren't in the current roster
+            let newRoster = [];
+            await Promise.all(roster.map(async ({name, uid, did, email, section}) => {
+                let fullSection = `${courseName}-${padWithZero(section, 4)}`
+                
+                let registeredUser = await UserModel.findOne({did}).exec();
+                let details = sectionMap[fullSection];
+                
+                newRoster.push(did); //add did to a list to remove all people that aren't in that list
+
+                if (!details) return
+                if (!registeredUser) { //adding new student to course
+                    let newUser = new UserModel({
+                        name,
+                        uid,
+                        did,
+                        email,
+                        sections: fullSection,
+                        lectures: details.lectureName,
+                        courses: details.courseName,
+                        authority: "STUDENT"
+                    });
+
+                    return await newUser.save();
+                } else {
+                    //update existing student
+                    return await UserModel.updateOne(
+                        {_id: registeredUser._id}, 
+                        {$set: {
+                            lectures: details.lectureName,
+                            courses: details.courseName,
+                            sections: fullSection}},
+                        /*{$addToSet: {
+                                lectures: details.lectureName, 
+                                courses: details.courseName, 
+                                sections: fullSection
+                        }},*/
+                        {upsert: true}
+                    );
+                }
+            }));
+
+            //remove did's from user collection that aren't in newRoster[]
+            let removedUsers = await UserModel.remove({$and: [{authority: "ADMIN"},{did: {$nin: newRoster}}]});
+
+            //let lecturesDocs = await LectureModel.insertMany(lectureObjs);
+            //let sectionsDocs = await SectionModel.insertMany(sectionObjs);
+
+            res.sendStatus(204);
+        } catch (e) {
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+        }
+    },
+            
+    retrieve: async function(req, res) {
+        let classId = req.params.id;
+        let foundClass = LectureModel.findOne({classId}).exec();
+        if (!foundClass) return res.status(404).message({message: "class not found"});
+        return res.json(foundClass);
+    },
+
+    removeOne: async function(req, res) {
+        let {id} = req.params;
+        let user = await UserModel.findOne({did: req.session.cas.user}).exec()
+
+        if (user.authority !== "ADMIN") return res.sendStatus(403);
+        // await LectureModel.removeOne({courseName})
+    },
+
+    sectionsList: async function(req, res) {
+        let {id} = req.params;
+        let allSections = await SectionModel.find({courseName: id}).exec();
+        return res.json(allSections);
+    }
+}

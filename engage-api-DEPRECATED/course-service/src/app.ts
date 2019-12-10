@@ -1,0 +1,71 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import path from 'path';
+import config from '../config';
+import https from 'https';
+import fs from 'fs';
+
+import routes from './routes/routes'
+import classes from './routes/classes';
+import users from './routes/users';
+import attendance from './routes/attendance';
+
+const app = express();
+const port = config.port;
+const mongoUrl = `mongodb://mongo:${config.mongoPort}/${config.mongoDB}`;
+const useHTTPS = config.useHTTPS;
+const keyPath = config.keyPath;
+const certPath = config.certPath;
+
+
+app.use(cors())
+app.use((req, res, next) => {
+    console.log(req.method + ' ' + req.originalUrl);
+    next();
+});
+app.use(express.json());
+
+async function connectToDatabase() {
+    try {
+        await mongoose.connect(mongoUrl, { autoReconnect: true, useNewUrlParser: true});
+        if (useHTTPS) {
+            https.createServer({
+                key: fs.readFileSync(path.join(__dirname, keyPath)),
+                cert: fs.readFileSync(path.join(__dirname, certPath))
+            }, app).listen(port, (err: any) => {
+                if (err) console.error(err);
+                console.log(`Server listening over https on port ${port}`)
+            })
+        } else {
+            app.listen(port, (err) => {
+                if (err) console.error(err);
+                console.log(`Server listening over http on port ${port}`);
+            })
+        }
+    
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+connectToDatabase();
+
+// Management
+app.get("/", routes.docs);
+app.delete("/", routes.nuke);
+app.get("/export", routes.export);
+// Classes Resource
+app.get("/classes", classes.list);
+app.post("/classes", classes.create);
+app.get("/classes/:id", classes.retrieve);
+// Will take a csv file of sections and their data matching it with students and their data.
+app.post("/classes/:id/ingest", classes.ingest);
+
+// User Resource
+app.get("/users", users.listAll);
+app.get("/classes/:id/students", classes.list)
+app.get("/users/:id", users.retrieve)
+app.delete("/users/:id", users.remove)
+
+

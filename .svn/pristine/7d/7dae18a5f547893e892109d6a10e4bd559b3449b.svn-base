@@ -1,0 +1,154 @@
+import {ICourse, ISection, IScheduleMeeting, IUser} from '../common/model-definitions'
+import {action, computed, observable, observe, runInAction} from "mobx";
+
+const course_data: Record<string, ICourse> = {
+    1: {
+        "_id": '1',
+        "name": "CMSC435",
+        "educators": ["jpurtillo", "araveesh"],
+        "semester": "Fall2019",
+        "topics": [
+            {date: new Date('2019-11-19'), topicsCovered: ["Intellectual Property", "Lab"]}, {
+                date: new Date('2019-11-22'),
+                topicsCovered: ["CDR"]
+            }],
+        "sections": ['10', '11']
+    },
+    2: {
+        "_id": '2',
+        "name": "CMSC425",
+        "educators": ["araveesh"],
+        "semester": "Spring2019",
+        "topics": [
+            {date: new Date('2019-11-19'), topicsCovered: ["Intellectual Property", "Lab"]}, {
+                date: new Date('2019-11-22'),
+                topicsCovered: ["CDR"]
+            }],
+        "sections": ['10', '11']
+    }
+};
+
+const section_data: Record<string, ISection> = {
+    section0101: {
+        "_id": '10',
+        "name": "0101",
+        "ta": ["araveesh"],
+        "roster": ["mskopic", "nendy"],
+        "schedule": ['100', '200'],
+    },
+    section0110: {
+        "_id": '11',
+        "name": "0110",
+        "ta": ["araveesh"],
+        "roster": ["aravi"],
+        "schedule": ['100'],
+    }
+
+};
+
+const schedule_meeting_data: Record<string, IScheduleMeeting> = {
+    '100': {
+        _id: '100',
+        type: 1, //ClassTypeEnum
+        days: [2, 4], //DayEnum
+        timeStart: 14.0,
+        timeEnd: 15.25,
+        location: {
+            lat: 38.990104,
+            long: -76.936399
+        }
+    },
+    '200': {
+        _id: '200',
+        type: 2, //ClassTypeEnum
+        days: [5], //DayEnum
+        timeStart: 12.5,
+        timeEnd: 13.75,
+        location: {
+            lat: 38.990104,
+            long: -76.936399
+        }
+    }
+};
+
+export enum EStoreState {
+    'loading',
+    'ready',
+    'error',
+    'init'
+}
+
+export class createStore {
+    @observable currentUser: IUser = null;
+    @observable courses = new Map<string, ICourse>();
+    @observable sections = new Map<string, ISection>();
+    @observable scheduleMeetings = new Map<string, IScheduleMeeting>();
+
+    constructor() {
+        this.init();
+    }
+
+    @observable private _storeState: EStoreState = EStoreState.init;
+
+    get storeState(): EStoreState {
+        return this._storeState;
+    }
+
+    set storeState(value: EStoreState) {
+        if (value != EStoreState.init) {
+            this._storeState = value;
+        }
+    }
+
+    get coursesList() {
+        return Array.from(this.courses.values());
+    }
+
+    @action
+    finishInit() {
+        this._storeState = EStoreState.ready;
+    }
+
+    @action
+    async loadCourses() {
+        this.storeState = EStoreState.loading;
+        runInAction(() => {
+            Object.keys(course_data).map(k => {
+                this.courses.set(k, course_data[k])
+            });
+            this.storeState = EStoreState.ready;
+        });
+    }
+
+    @action
+    async loadSections() {
+        this.storeState = EStoreState.loading;
+        runInAction(() => {
+            Object.keys(section_data).map(k => {
+                this.sections.set(k, section_data[k])
+            });
+            this.storeState = EStoreState.ready;
+        });
+    }
+
+    @action
+    async loadScheduleMeetings() {
+        this.storeState = EStoreState.loading;
+        runInAction((() => {
+            Object.keys(schedule_meeting_data).map(k => {
+                this.scheduleMeetings.set(k, schedule_meeting_data[k])
+            });
+            this.storeState = EStoreState.ready;
+        }));
+    }
+
+    @action
+    async init() {
+        this.storeState = EStoreState.init;
+        await this.loadCourses();
+        await this.loadSections();
+        await this.loadScheduleMeetings();
+        this.finishInit();
+    }
+
+}

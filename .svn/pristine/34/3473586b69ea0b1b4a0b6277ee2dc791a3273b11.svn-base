@@ -1,0 +1,128 @@
+import React, { Component} from "react";
+import CourseCard from '../components/CourseCard'
+import {
+    BrowserRouter as Router,
+    Link,
+    useLocation,
+    Switch, 
+    Route
+  } from "react-router-dom";
+  import axios from 'axios';
+
+  import Dashboard from './Dashboard'; 
+  import { Form, Button, Card, Col } from 'react-bootstrap';
+
+
+const data = [
+  {
+    'course_id': 1,
+    'reason': 'testing reason'
+  },
+  {
+    'course_id': 2,
+    'reason': 'testing reason'
+  },
+  {
+    'course_id': 3,
+    'reason': 'testing reason'
+  }
+]; 
+
+type MyState = {course_id: string, course_name: string , educators: string, semester: string, sections: string };
+type MyProps = {}; 
+
+export default class Courses extends React.Component<MyProps, MyState> {
+    
+   constructor(props: any){
+     super(props); 
+     this.state = {course_id: '', course_name: '', educators: '', semester: '', sections: '' };
+     var partialState : any = {};
+     this.handleChange = this.handleChange.bind(this);
+     this.handleSubmit = this.handleSubmit.bind(this);
+   }
+
+    getCoursesFromApiAsync() {
+
+      console.log("here trying to fetch data from localhost data"); 
+      return fetch('http://localhost:8080/courses', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          
+        }
+      })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        console.log(" I am here with the response object"); 
+        console.log(responseJson) 
+        return responseJson;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    }
+
+    componentDidMount(){
+      console.log("Component Mounted, initiating request to backend courses"); 
+      console.log(this.getCoursesFromApiAsync()); 
+    }
+
+   handleChange(event : any) {
+     
+    const target = event.target;
+    const value = target.value;
+    const name = target.name;
+    var partialState : any = {};
+    partialState[name] = value;
+    this.setState(partialState);
+  }
+
+  handleSubmit(event : any) {
+
+    alert(JSON.stringify(this.state)); 
+    
+    event.preventDefault();
+  }
+
+
+  render() {
+   
+    let list = data.map((data, index) => {
+        return (<CourseCard key={index} title={'courses'} reason={data.reason} course_id={data.course_id}/>)
+    }); 
+
+    return (
+      <div id="courses">
+        <h1>Create new Course if Necessary</h1>
+        <div>
+        <form onSubmit={this.handleSubmit}>
+        <label>
+          Course ID: 
+          <input name ="course_id" type="text" value={this.state.course_id} onChange={this.handleChange} />
+        </label>
+        <label>
+          Course Name: 
+          <input  name ="course_name" type="text" value={this.state.course_name} onChange={this.handleChange} />
+        </label>
+        <label>
+          Please Enter Educators (Comma Seperated): 
+          <input  name ="educators" type="text" value={this.state.educators} onChange={this.handleChange} />
+        </label>
+        <label>
+          Please Enter the Current Semester: 
+          <input  name ="semester" type="text" value={this.state.semester} onChange={this.handleChange} />
+        </label>
+        <label>
+         Please Enter Section #'s, (Comma spaced): 
+          <input  name ="sections" type="text" value={this.state.sections} onChange={this.handleChange} />
+        </label>
+        <br></br>
+        <input type="submit" value="Submit" />
+      </form>
+        </div>
+        {list}
+      </div>
+    );
+  }
+}

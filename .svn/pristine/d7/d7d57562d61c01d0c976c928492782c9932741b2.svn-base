@@ -1,0 +1,48 @@
+FORMAT: 1A
+
+# Attendance Service
+
+The Attendance Service is responsible for storing the attendance events of students. This service has a dependency on the Course Service.
+
+
+# Group Attendance
+
+## Attendance [/attendance]
+
+
+
+### List all attendance [GET /attendance{?uid}{?sectionId}{?courseId}{?start}{?end}]
+
++ Parameters
+    + uid (number, optional) - Filters attendance to include only attendance from the provided student.
+    + sectionId: CMSC216-0101 (number, optional) - Filters by section, in the format [DEPARTMENT_ID][COURSE_NUM]-[SECTION_NUM].
+    + courseId (number, optional) - Filters by course.
+    + start (number, optional) - Filters attendance to include only attendance that occured on or after the start datetime.
+    + end (number, optional) - Filters attendance to include only attendance that occured on or before the end datetime.
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 1,
+                "uid": 000001,
+                "course_id": "cmsc132",
+                "section_id": "cmsc132-0101",
+                "timestamp": "2019-11-13T:19:18:22",
+                "meeting_type": "LEC"
+            }
+        ]
+
+### Create Student Attendance [POST]
+
++ uid (string) - The uid of the student posting attendance.
++ courseId (string) - The id of the course which the attendance will be logged for. 
++ sectionId (string) - The section id for the provided courseId.
+
++ Response 201 (application/json)
+
+        {
+            "uid": 000001,
+            "sectionId": "CMSC132-0101",
+            "type": "LEC",
+        }

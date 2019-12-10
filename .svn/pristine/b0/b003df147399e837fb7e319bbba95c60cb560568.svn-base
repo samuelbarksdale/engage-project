@@ -1,0 +1,47 @@
+import React from 'react';
+import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Absence from './views/Absence'
+import Home from './views/Home'
+import Dashboard from './views/Dashboard'
+//import CourseCard from '../components/CourseCard.js'
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
+import { Button, Nav } from 'react-bootstrap';
+import Courses from './views/Courses'
+
+
+
+function App() {
+  return (
+    <Router>
+      <div>
+        <p> Test</p>
+        {/* A <Switch> looks through its children <Route>s and
+            renders the first one that matches the current URL. */}
+          
+        <Switch>
+        <Route path="/dashboard/:courseid" children={<Dashboard />} />      
+        <Route path="/dashboard" exact>
+            <Dashboard />
+          </Route>
+          <Route path="/" exact>
+            <Courses />
+          </Route>
+          
+        </Switch>
+      </div>
+    </Router>
+  );
+}
+
+
+
+
+
+
+export default App;

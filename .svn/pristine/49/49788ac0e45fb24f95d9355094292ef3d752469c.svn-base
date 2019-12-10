@@ -1,0 +1,55 @@
+import {app} from "../server"
+import user from './user';
+import absence from './absence'
+import classes from './classes';
+import attendance from './attendance';
+import polls from './routes/polling'
+
+import multer from 'multer';
+const Upload = multer({storage: multer.memoryStorage()});
+const MAX_IMAGES = 4;
+
+// USERS
+app.get("/api/me", user.me)
+app.get("/api/users/:id/classes", user.listClasses)
+app.get('/api/users', user.list)
+app.post('/api/users', user.create)
+
+// ATTENDANCE
+app.route('/api/attendance')
+    .get("/api/attendance", attendance.list)
+    .post("/api/attendance", attendance.create)
+
+// CLASSES
+app.route('/api/classes')
+    .get("/api/classes", classes.list)
+    .post("/api/classes", classes.create)
+
+// ABSENCES
+app.route('/api/absences')
+    .get("/api/absences", absence.getAbsences)
+    .post("/api/absences", Upload.array('files', MAX_IMAGES), absence.createAbsenceReport)
+
+app.route('/absences/:id')
+    .get(absence.getAbsenceId)
+    .put(absence.updateAbsence)
+    // .delete(absence.deleteAbsence)
+
+app.route('/absences/:id/files')
+    .get(absence.getFiles)
+    .post(Upload.array('files',MAX_IMAGES), absence.uploadFiles)
+app.route('/absences/:id/files/:fileId')
+    .get(absence.fetchFile)
+
+// POLLING
+app.get("/api/polls", polls.listPolls)
+    .post(polls.create)
+app.get("/api/polls/courses/:courseId", polls.listByCourseId)
+app.get("/api/polls/students/:studentId", polls.listByStudent)
+app.get("/api/polls/:pollId", polls.retrieveById)
+    .delete(polls.deleteById)
+app.get("/api/polls/:pollId/choices/:choiceId", polls.retrievePollChoice)
+    .put(polls.insterVote)
+app.put("/api/polls/:pollId/close", polls.close)
+app.get("/api/polls/:pollId/text", polls.retrieveTextPoll)
+    .put(polls.insterText)

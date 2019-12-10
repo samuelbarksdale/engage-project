@@ -1,0 +1,23 @@
+import React from 'react';
+import CourseForm from '../components/CourseForm'
+import { Container } from 'react-bootstrap';
+
+export default class Settings extends React.Component {
+
+    constructor(props) {
+        super(props)
+    }
+
+    render() {
+        return (
+            <div>
+                <h3 className="text-center mt-4">Settings</h3>
+                <Container>
+                    <h4>Setup a Course</h4>
+                    <CourseForm />
+                </Container>
+                
+            </div>
+        );
+    }
+}

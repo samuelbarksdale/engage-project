@@ -1,0 +1,114 @@
+import React, {Component} from 'react';
+import { Form, Button } from 'react-bootstrap';
+import config from '../config';
+
+
+export default class PollForm extends Component {
+
+    constructor(props) {
+        super(props);
+
+        this.initialState = {
+            question: '',
+            questionType: '',
+            choices: [],
+        }
+
+        this.state = this.initialState;
+        this.handleQuestions = this.handleQuestions.bind(this);
+        this.handleChoiceChange = this.handleChoiceChange.bind(this);
+        this.handleAddChoice = this.handleAddChoice.bind(this);
+        this.submitForm = this.submitForm.bind(this);
+    }
+
+    handleQuestions(event) {
+     
+        const { name, value } = event.target;
+
+        this.setState({
+            [name]: value,
+        });
+    }
+
+    handleChoiceChange(idx, event) {
+
+        const newChoices = this.state.choices.map((currChoice, sidx) => {
+            if(idx !== sidx) return currChoice;
+            return event.target.value;
+        });
+
+        this.setState({
+            choices: newChoices
+        });
+    }
+
+    handleAddChoice() {
+
+        this.setState({
+            choices: this.state.choices.concat(['']),
+        })
+    }
+
+    submitForm() {
+
+        this.props.handleSubmit(this.state);
+        this.setState(this.initialState);
+    }
+
+    render() {
+
+        return (
+            <Form>
+            <Form.Group controlId="question">
+                <Form.Label>Question</Form.Label>
+                <Form.Control 
+                as="textarea" 
+                placeholder="Enter question for poll"
+                name="question"
+                value={this.state.question}
+                onChange={this.handleQuestions} 
+                />
+            </Form.Group>
+
+            <Form.Group controlId="questionType">
+                <Form.Label>Question Type</Form.Label>
+                <Form.Control 
+                as="select" 
+                name="questionType"
+                value={this.state.questionType}
+                onChange={this.handleQuestions}>
+                    <option value="free">Free Response</option>
+                    <option value="multiple">Multiple Choice</option>
+                </Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId="choices">
+                <Form.Label>Answer Choices</Form.Label>
+                <Form.Text className="text-muted">
+                    Provide only if question type is Multiple Choice.
+                </Form.Text>
+
+                {this.state.choices.map((choice,idx) => {
+                    return <Form.Row>
+                            <Form.Control 
+                            type="text" 
+                            placeholder={`Answer #${idx + 1}`}
+                            name="choices"
+                            value={choice}
+                            onChange={(e) => this.handleChoiceChange(idx, e)}/>
+                    </Form.Row>
+                })}
+
+                <Button variant="primary" onClick={this.handleAddChoice}>
+                    Add Choice
+                </Button>
+            </Form.Group>
+
+            <Button style={{marginTop: "10px"}} variant="success" size="md" onClick={this.submitForm}>
+                Submit New Poll
+            </Button>
+            </Form>
+        )
+    }
+
+}

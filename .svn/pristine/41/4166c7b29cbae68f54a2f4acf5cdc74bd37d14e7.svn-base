@@ -1,0 +1,149 @@
+import mongoose from "mongoose";
+import {ClassModel} from "../schema"
+
+
+export default {
+    
+    list: async function(req, res) {
+        let filter = {}
+        // filter = Object.assign(req.query, filter);
+        let result = await ClassModel.find(filter).exec();
+        return res.json(result)
+    },
+    create: async function(req, res) {
+        const { 
+            id,
+            courseId,
+            sections,
+            educators,
+            schedule
+        } = req.body;
+
+        let existing = await ClassModel.findOne({id}).exec();
+        if (existing) return res.status(400).json({message: "A class with that id already exists"});
+
+        try {
+            // We can do some free validation with mongoose schemas
+            let newClass = new ClassModel({id, courseId, sections, educators, schedule});
+            let result = await newClass.save();
+            
+            return res.json(result);
+        } catch (e) {
+            console.error(e);
+            return res.status(400).json({message: e.message});
+        }
+        
+    },
+            
+            // Course.findOne({'id': req.body.id}, async function(err, result) {
+            //     if (err) {
+            //         console.error(err);
+            //         test = 2;
+            //     } else if (result == null) {
+            //         console.log("received new course id: " + req.body.id);
+            //         test = 0;
+            //     } else {   
+            //         console.log("course: " + req.body.id + " already exists");
+            //         test = 1;
+            //     }
+            //     //create course object if no duplicate
+            //     if (test == 0) {
+            //         //Bottom-up document creation: schedule, section, then course
+            //         let sectionIds: Array<string> = [];
+            //         console.log("There are: " + req.body.sections.length + " section objects in this course");
+            //         for(var i = 0; i < req.body.sections.length; i++) { //section decomp
+            //             let scheduleIds: Array<string> = [];
+            //             /*for (var j = 0; j < req.body.sections[i].schedule.length; j++) { //schedule decomp
+            //                 var newSchedule = new Schedule();
+            //                 let sc_id = new mongoose.mongo.ObjectId();
+            //                 //removed for CDR
+            //                 if (req.body.sections[i].schedule[j].location !== null) {
+            //                     console.log("Empty LOCATION found\n");
+            //                     newSchedule = new Schedule({
+            //                         _id: sc_id,
+            //                         type: req.body.sections[i].schedule[j].type,
+            //                         days: req.body.sections[i].schedule[j].days,
+            //                         timeStart: req.body.sections[i].schedule[j].timeStart,
+            //                         timeEnd: req.body.sections[i].schedule[j].timeEnd,
+            //                         location: {}
+            //                     });
+            //                 } else {
+            //                     //in CDR, location will be required
+            //                     newSchedule = new Schedule({
+            //                         _id: sc_id,
+            //                         type: req.body.sections[i].schedule[j].type,
+            //                         days: req.body.sections[i].schedule[j].days,
+            //                         timeStart: req.body.sections[i].schedule[j].timeStart,
+            //                         timeEnd: req.body.sections[i].schedule[j].timeEnd,
+            //                         location: {
+            //                             lat: req.body.sections[i].schedule[j].location.lat,
+            //                             lng: req.body.sections[i].schedule[j].location.lng
+            //                         }
+            //                     });
+            //                 //} //CDR
+            //                 try {
+            //                     let y = await newSchedule.save();
+            //                     console.log("Saved schedule with id " + sc_id.toString());
+            //                     scheduleIds.push(sc_id.toString());
+            //                 } catch (err2) {
+            //                     console.error(err2);
+            //                     return res.send("ERROR 400: Database error. Schedule data type error");
+            //                 }
+            //                 console.log(req.body.sections[i].schedule[j]);
+            //             }*/
+            //             let sec_id = new mongoose.mongo.ObjectId();
+            //             var newSection = new Section({
+            //                 _id: sec_id,
+            //                 id: req.body.sections[i].id,
+            //                 ta: req.body.sections[i].ta,
+            //                 roster: [],// req.body.sections[i].roster, //roster hardcoded to [] for CDR
+            //                 schedule: req.body.sections[i].schedule
+            //             });
+            //             try {
+            //                 let x = await newSection.save();
+        
+            //                 sectionIds.push(req.body.sections[i].id);
+            //                 console.log("Saved section with id " + sec_id.toString());
+            //             } catch(err3) {
+            //                 console.error(err3);
+            //                 return res.send("ERROR 400: Database error. Section data type error");
+            //             }
+            //             console.log(req.body.sections[i]);
+            //         }
+            //         console.log("section ids: " + sectionIds);
+            //         //Create Course Document
+            //         var newCourse = new Course({
+            //             _id: new mongoose.mongo.ObjectId(),
+            //             id: req.body.id,
+            //             educators: req.body.educators,
+            //             semester: req.body.semester,
+            //             topics: req.body.topics,
+            //             sections: sectionIds,
+            //             schedule: req.body.schedule
+            //         });
+            //         //console.log("\nTEST\nSchedule.location.lng: " + newCourse.schedlue.location.lng);
+            //         //Save Document
+            //         newCourse.save(function (err2, newCourse) {
+            //             if (err2) {
+            //                 console.error(err2);
+            //                 return res.send("ERROR 400: Database error, course type error");
+            //             } else {
+            //                 console.log("Saved course id " + req.body.id);
+            //                 return res.json(newCourse);
+            //             }
+            //         });
+            //     } 
+                
+            // })
+    retrieve: async function(req, res) {
+        let classId = req.params.id;
+        let foundClass = ClassModel.findOne({classId}).exec();
+        if (!foundClass) return res.status(404).message({message: "class not found"});
+        return res.json(foundClass);
+    },
+    // Primary data upload
+    ingest: async function(req, res) {
+        
+    }
+
+}

@@ -1,0 +1,134 @@
+FORMAT: 1A
+
+# Absence Service
+The absence service is responsible for storing the absence forms of students. 
+
+# Group Absence
+
+## Absences [/absences]
+
+### Create Absence [POST /absence]
+
++ student_id: "00001234" (required, string) - ID of student
++ course_name: "CMSC424" (required, string) - name of course
++ section: {CMSC435-0101} (required, string) - section of course
++ missed_days: "datetime" (required, datetime) - date(s) of absence
++ type: "Doctor visit" (required, string) - type of absence
++ rationale: "doctor's office" (required, string) - reason for absence
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": "1",
+                "student_id": "00001234",
+                "course_name": "CMSC435",
+                "section": ["CMSC435-0101"],
+                "missed_days": [(datetime), (datetime)],
+                "time_stamp": ["2019-11-12T08:40:51.630Z"]
+                "type": "Doctor visit"
+                "rationale": "I was at the doctor's office",
+                "documentation": doctor_note.pdf
+                "status": "Pending"
+
+            }
+        ]
+
+### Retrieve single absence [GET /absence{absence_id}]
+
++ Parameters 
+    + absence_id (required, number) - ID of the absence
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": "1",
+                "student_id": "00001234",
+                "course_name": "CMSC435",
+                "section": [{"CMSC435-0101"}],
+                "missed_days": [(datetime), (datetime)],
+                "time_stamp": ["2019-11-12T08:40:51.630Z"]
+                "type": "Doctor visit"
+                "rationale": "I was at the doctor's office",
+                "files": []
+                "status": "Approved"
+
+            }
+        ]
+
+### Delete Absence [DELETE /absence{absence_id}]
+
++ Parameters 
+    + absence_id (required, number) - ID of the absence
+
++ Response 204 
+
+### Update Absence [PUT /absence{absence_id}]
++ Parameters 
+    + absence_id (required, number) - ID of the absence
+
++ Request (application/json)
+
+        {
+            "type": "",
+            "rationale": "",
+            "status": ""
+        }
+
++ Response 200 (application/json)
+
+
+        {
+            "id": "1",
+            "student_id": "00001234",
+            "course_name": "CMSC435",
+            "section": ["CMSC435-0101"],
+            "missed_days": [(datetime), (datetime)],
+            "time_stamp": ["2019-11-12T08:40:51.630Z"],
+            "type": "Doctor visit",
+            "rationale": "I was at the doctor's office",
+            "files": []
+            "status": "Approved"
+
+        }
+
+
+### Return all Absences [GET /absences{?course_id}{?section_id}{?type}{?student_id}{?status}]
++ Parameters
+    + course_id: "CMSC435" (required, string) - Name of course
+    + section_id: "CMSC435-0101" (required, string) - Name of section
+    + type: "illness" (optional, string) - Type of report out of ["illness", "religious", "military", "university", "external", "other"]
+    + student_id: "00001" (optional, string) - UID of the student
+    + status: "approved" (optional, string) - The status of the report out of ["approved", "pending", "rejected"]
+
++ Response 200 (application/json)
+
+            [
+                {
+                    "id": "000000000000",
+                    "student_id": "00001234",
+                    "course_id": "CMSC435",
+                    "section_id": "CMSC435-0101",
+                    "missed_days": {"start": "2019-11-12T08:40:51.630Z", "end": "2019-11-12T08:40:51.630Z" },
+                    "created_at": "2019-11-12T08:40:51.630Z",
+                    "type": "illness",
+                    "rationale": "I needed to get tested for strep",
+                    "files": ["0000000", "0000000"]
+                    "status": "approved"
+                }
+            ]
+
+
+### Request Missing Work [GET /absences/missingWorkRequest{course_id}{date}]
++ Parameters
+    + course_id: "21431" (required, string) - Course id for desired course
+    + date: "2019/10/29" (required, string) - Date for missed absence
+
++ Response 200 (application/json)
+        [
+            {
+                "missing_work": {course_object}
+            }
+        ]
+

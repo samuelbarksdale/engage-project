@@ -1,0 +1,153 @@
+const prompts = require('prompts');
+const yargs = require('yargs');
+const {MongoClient, MongoError} = require ('mongodb')
+const fs = require('fs')
+async function addAdmin(db) {
+
+    const {did, name} = await prompts([
+        {
+            type: 'text',
+            name: 'did',
+            message: 'New Admin Directory Id: ',
+        },
+        {
+            type: 'text',
+            name: 'name', 
+            message: 'New Admin Name: '
+        }
+
+    ]);
+    if (did && name) {
+        let res = await db.collection('users').insertOne({did, name, authority: "ADMIN"});
+        if (res) console.log("Successfully created admin user " + did)
+    } else console.log("Both directory id and name are required!")
+    
+};
+
+async function removeUser(db) {
+    const {did} = await prompts({
+        type: 'text',
+        name: 'did',
+        message: 'Remove user by their directory id: '
+    });
+    let res = await db.collection('users').deleteOne({did});
+    if (res.deletedCount > 0) console.log("Successfully removed the user " + did)
+    else console.log("Could not find the user " + did)
+}
+
+async function exportData(db) {
+    // Don't save the image collections
+    let collections = (await db.listCollections()).filter(c => !c.test(/fs\./));
+    await Promise.all(collections.map(async name => {
+        const cursor = await db.collection(name).find({});
+        const fileStream = fs.createWriteStream(`${name}.json`);
+        fileStream.on('finish', () => {console.log(`Finished writing ${name}`)})
+        cursor.pipe(fileStream)
+        fileStream.end()
+    }))
+
+}
+
+async function manualAttendance(db) {
+    const {did, timestamp, format} = await prompts([
+        {
+            type: 'text',
+            name: 'did',
+            message: 'Add user attendance by their directory id: ',
+        },
+
+        {
+            type: 'text',
+            name: 'timestamp',
+            message: 'time and date of user attendace ',
+        },
+
+        {
+            type: 'text',
+            name: 'format',
+            message: 'Type of academic meeting, enter either LEC or DIS',
+        }
+    ]);
+    if (did && timestamp && format) {
+        let user = await db.collection('users').findOne({did});
+        let res = await db.collection('attendance').insertOne({did, timestamp, format, lectureName: user.lectures, courseName: user.courses, sectionId: user.sections})
+        if (res) console.log("Successfully added attendance for student " + did)
+    } else console.log('directory id, datetime and class format are required')
+}
+
+
+(async () => {
+    const argv = yargs
+        .command('admin-tool')
+        .option('url', {
+            description: "Mongodb Url without port. Leave the default if the mongodb instance is running locally.",
+            type: 'string'
+        })
+        .option('port', {
+            alias: 'p',
+            description: "Mongodb port number. Defaults to 27017.",
+            type: 'number'
+        })
+        .option('database', {
+            alias: 'db',
+            description: 'Mongodb database to access. Note: this is not the instance Url.',
+            type: 'string'
+        })
+        .option('user', {
+            alias: 'u',
+            description: "Admin username to the database",
+            type: 'string'
+        })
+        .option('password', {
+            alias: 'pwd',
+            description: "Admin password corresponding to the admin username for the database",
+            type: "string"
+        })
+        .help()
+        .argv
+
+    const URL = argv.url || 'localhost';
+    const PORT = argv.p || 27017;
+    const DATABASE = argv.db || 'engage'
+    let url = `mongodb://${URL}:${PORT}`
+    let client;
+    try{
+        client = new MongoClient(url, {useNewUrlParser: true, useUnifiedTopology: true});
+        client = await client.connect();
+        let db = client.db(DATABASE)
+        let done = false
+        console.log("Welcome to the Engage Admin tool. Please use this to grant admin status to TAs or other educators, to remove their status, or to export data.")
+        console.log("This script assumes it lives on the same machine as the Engage app, that the app is running, and is running through docker.")
+        while (done != true) {
+            const {choice} = await prompts({
+                type: 'number',
+                name: 'choice',
+                message: 'Enter your action [0. Exit 1. Add Admin  2. Remove User 3. Export Data 4. Manual Attendance]: '
+            });
+            switch (choice) {
+                case 0: 
+                    done = true
+                    break;
+                case 1:
+                    await addAdmin(db);
+                    break;
+                case 2:
+                    await removeUser(db);
+                    break;
+                case 3:
+                    await exportData(db);
+                    break;
+                case 4:
+                    await manualAttendance(db);
+                    break;
+                default:
+                    console.log("Uh oh, I don't recognize that option.")
+            }
+        }
+        console.log("Bye!")
+        client.close()
+    } catch(e) {
+        client.close()
+        console.error(e)
+    }
+})();

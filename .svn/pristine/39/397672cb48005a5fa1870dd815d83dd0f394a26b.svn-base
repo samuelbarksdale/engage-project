@@ -1,0 +1,262 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+
+const app = express();
+const port = 8080;
+
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+
+mongoose
+	.connect(
+        'mongodb://mongo:27017/course-service',
+        { useNewUrlParser: true}
+    )
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.log(err));
+mongoose.set('useFindAndModify', false);
+
+var UserTypeEnum = {
+    STUDENT: 1,
+    EDUCATOR: 2
+}
+//User Service Definitions
+var userSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    name: String,
+    uid: String,
+    type: Number, //STUDENT, EDUCATOR
+    classesCurrent: [String],
+    classesPast: [String]
+});
+
+var User = mongoose.model('User', userSchema);
+
+var ClassTypeEnum = {
+    LECTURE: 1,
+    DISCUSSION: 2,
+    OTHER: 3
+}
+
+var DayEnum = {
+    M: 1,
+    T: 2,
+    W: 3,
+    Th:4,
+    F: 5
+}
+//Section Schedule Schema definition
+var scheduleSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    type: Number, //ClassTypeEnum
+    days: [Number], //DayEnum
+    timeStart: mongoose.Schema.Types.Decimal128, //Date type is not appropriate since we just want the hour. EX: 14.25 = 2:15PM
+    timeEnd: mongoose.Schema.Types.Decimal128,
+    location: {
+        lat: mongoose.Schema.Types.Decimal128, 
+        long: mongoose.Schema.Types.Decimal128
+    }
+});
+
+//Section Schema definition
+var sectionSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId, //ObjectId referenced in courseSchema.sections
+    name: String,
+    ta: [String],
+    roster: [String], //uid
+    schedule: [mongoose.Schema.Types.ObjectId] //scheduleSchema
+});
+
+//Course Schema definition
+var courseSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    name: String,
+    educators: [String], //uid
+    semester: String,
+    topics: [{date: Date, topicsCovered: [String]}],
+    sections: [mongoose.Schema.Types.ObjectId] //sectionSchema
+});
+var Schedule = mongoose.model('Schedule', scheduleSchema);
+var Section = mongoose.model('Section', sectionSchema);
+var Course = mongoose.model('Course', courseSchema);
+
+//API ENDPOINTS
+app.get('/', (req, res) => {
+    res.send("Hello, from the course and user service!")
+    console.log("Test")
+})
+
+app.post('/courses', (req, res) => {
+    console.log("received a new course")
+    res.send("You have reached the course endpoint")
+})
+
+app.get('/courses', (req, res) => {
+    res.send("You have reached the course endpoint")
+})
+
+app.post('/users', (req, res) => {
+    //test for duplicate POST
+    var test = 0; //0 for no duplicate, 1 for duplicate, 2 for other errors
+    var existingUser = {};
+    User.findOne({'uid': req.body.uid}, function(err, result) {
+        if (err) {
+            console.error(err);
+            test = 2;
+        } else if (result == null) {
+            console.log("received new user uid: " + req.body.uid)
+            test = 0;
+        } else {   
+            console.log("user: " + req.body.uid + " already exists");
+            existingUser = result;
+            test = 1;
+        }
+        //create user object if no duplicate
+        if (test == 0) {
+            //Create User Document for MongoDB
+            var newId = new mongoose.mongo.ObjectId();//for testing only: '123456789ABCDEFFAAAABBBC'
+            var newUser = new User({
+                _id: newId,
+                name: req.body.name,
+                uid: req.body.uid,
+                type: req.body.type,
+                classesCurrent: req.body.classesCurrent,
+                classesPast: req.body.classesPast
+            });
+            //Save Document
+            newUser.save(function (err2, newUser) {
+                if (err2) {
+                    console.error(err2);
+                    return res.send("ERROR 400: Database error");
+                } else {
+                    console.log("Saved " + req.body.uid + " with id " + newId.toString());
+                    return res.send(JSON.stringify(newUser));
+                }
+            });
+        } else if (test == 2) { //if error, return
+            return res.send("ERROR 400: Database error");
+        } else {
+            console.log("Updating user uid: " + req.body.uid);
+            var update = {
+                'name': req.body.name,
+                'uid': req.body.uid,
+                'type': req.body.type,
+                'classesPast': req.body.classesPast,
+                'classesCurrent': req.body.classesCurrent
+            }
+            if (update.classesCurrent == null) update.classesCurrent = [];
+            if (update.classesPast == null) update.classesPast = [];
+            User.findOneAndUpdate({'uid': req.body.uid}, update, {new: true}, function(err, updated) {
+                if (err) {
+                    console.error(err);
+                    return res.send("ERROR: type casting error");
+                } else {
+                    return res.send(updated);
+                }
+            }) 
+        }
+    })
+    //console.log("test = "+test);
+})
+
+app.get('/users/:uid', (req, res) => {
+    console.log("uid: " + req.params.uid);
+    User.findOne({'uid': req.params.uid}, function(err, user) {
+        if (err) {
+            return console.error(err);
+        } else if (user == null) {
+            return res.send("User does not exist");
+        } else {
+            console.log(user);
+            return res.send(JSON.stringify(user));
+        }
+    })
+})
+
+app.get('/users', (req, res) => {
+  User.find({}, (err, users) => {
+    res.send(users);  
+  });
+});
+
+app.delete('/users/:uid', (req, res) => {
+    console.log("uid: " + req.params.uid);
+    //still need logic for deleting from course objects.
+    //should create a function which removes a student uid from a course object
+    //function can be called from here or from the DELETE course/user/ endpoints1
+    User.deleteOne({'uid': req.params.uid}, function(err) {
+        if (err) return console.error(err);
+        return res.send("deleted user object uid: " + req.params.uid)
+    })
+})
+
+//testing only
+app.get('/deleteUsers', (req, res) => {
+    User.deleteMany({}, function(err) {
+        if (err) console.error(err);
+        return res.send("Deleted All Users")
+    })
+})
+
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.error(err)
+    }
+    return console.log(`Server listening on port ${port}`);
+})
+
+
+
+//graveyard
+/*app.put('/users:uid', (req, res) => {
+    console.log("received user uid: " + req.body.uid)
+
+    //test for existing user
+    var test = 0; //0 for found user, 1 for not found, 2 for errors
+    var existingUser = {};
+    User.findOne({'uid': req.body.uid}, function(err, result) {
+        if (err) {
+            console.error(err);
+            test = 2;
+        } else if (result == null) {
+            test = 1;
+        } else {   
+            console.log("user: " + result.uid + " found");
+                //result.name = //test for which fields are being updated
+                test = 0;
+        }
+        //create user object if no duplicate
+        if (test == 0) {
+            //Create User Document for MongoDB
+            var newId = new mongoose.mongo.ObjectId();//for testing only: '123456789ABCDEFFAAAABBBC'
+            var newUser = new User({
+                _id: newId,
+                name: req.body.name,
+                uid: req.body.uid,
+                type: req.body.type,
+                classesCurrent: req.body.classesCurrent,
+                classesPast: req.body.classesPast
+            });
+            //Save Document
+            newUser.save(function (err2, newUser) {
+                if (err2) {
+                    console.error(err2);
+                    return res.send("ERROR 400");
+                } else {
+                    console.log("Saved " + req.body.uid + " with id " + newId.toString());
+                    return res.send(JSON.stringify(newUser));
+                }
+            });
+        } else if (test == 2) { //if error, return
+            return res.send("ERROR 400");
+        } else {
+            //console.log(existingUser);
+            return res.send(existingUser);  
+        }
+    })
+    //console.log("test = "+test);
+})*/

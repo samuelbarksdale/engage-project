@@ -1,0 +1,37 @@
+import React from 'react'
+import { Button, Card } from 'react-bootstrap';
+import {
+    BrowserRouter as Router,
+    Link,
+    useLocation,
+    Switch, 
+    Route
+  } from "react-router-dom";
+import Dashboard from '../views/Dashboard'; 
+
+
+const CourseCard = (props) =>  {
+
+
+    let query = new URLSearchParams(useLocation().search); 
+
+    
+    return (
+    <div>    
+    <Card style={{ width: '18rem' }}>
+    <Card.Img variant="top" src="holder.js/100px180" />
+    <Card.Body>
+    <Card.Title>{props.title}</Card.Title>
+      <Card.Text>
+        {props.reason}
+      </Card.Text>
+      <Link to='/dashboard'>Go to section </Link>
+    </Card.Body>
+    </Card>
+  </div> 
+  )
+
+  
+} 
+
+export default CourseCard

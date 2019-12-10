@@ -1,0 +1,345 @@
+// import path from 'path';
+import _ from 'lodash';
+import mongoose from 'mongoose';
+import {Readable} from 'stream';
+import {AbsenceModel} from '../schemas/absenceSchema';
+import { UserModel } from '../schemas/userSchema';
+import ServerError from '../helpers/ServerError';
+import { SectionModel, LectureModel } from '../schemas/classSchema';
+
+const Status = {
+        Approved: "approved",
+        Rejected: "rejected",
+        Pending: "pending"
+}
+
+const AbsenceType = {
+        Illness: "illness",
+        Religious: "religious",
+        Military: "military",
+        University: "university",
+        External: "external",
+        Other: "other"
+}
+
+const GridFSBucket = mongoose.mongo.GridFSBucket;
+const ObjectID = mongoose.mongo.ObjectID;
+
+async function removeFilesHelper(files) {
+    const bucket = new GridFSBucket(mongoose.connection.db);
+    await Promise.all(files.map((id) => {
+        return new Promise((resolve, reject) => {
+            bucket.delete(id, (err) => {
+                if (err) reject(err);
+                resolve(true);
+            });
+        }); 
+    }));
+    return true; 
+}
+
+async function uploadFileHelper(files) {
+    const bucket = new GridFSBucket(mongoose.connection.db);
+
+    let ids = await Promise.all(files.map((file) => {
+        let options = {
+            content_type: file.mimetype
+        }
+        let readStream = new Readable();
+        readStream.push(file.buffer);
+        readStream.push(null);
+        
+        return new Promise((resolve, reject) => {
+            let writeStream = bucket.openUploadStream(file.originalname, options);
+            readStream.pipe(writeStream)
+                .on('finish', function() {
+                    resolve(writeStream.id)
+                })
+                .on('error', function(e) {
+                    reject(e)
+                }).id
+        }); 
+    }));
+    return ids;  
+}
+
+export default {
+    // Methods for /absences route
+    getAbsences: async function (req, res){
+        // console.log("In getAbsence")
+        // console.log(req.session)
+
+        const validParams = ["course_id", "section_id", "uid", "type", "missed", "status"];
+        const params = req.query
+        const filter = {};
+        let user = await UserModel.findOne({did: req.session.cas.user}).exec();
+        if (user.authority === "ADMIN") {
+            let courses = await LectureModel.find({educators: {$in: [user.did]}}).select('courseName').exec();
+            courses = Object.keys(courses.reduce((acc, c) => {
+                acc[c.courseName] = c.courseName;
+                return acc;
+            }, {}))
+            let reports = await AbsenceModel.find({courseName: {$in: courses}}).exec();
+            return res.json(reports);
+        } else {
+            let reports = await AbsenceModel.find({did: req.session.cas.user}).exec();
+            return res.json(reports);
+        }
+
+        try {
+            validParams.map(async (param) => {
+                if (params.hasOwnProperty(param)) {
+                    let value = params[param]
+                    if (param == "missed") {
+                        let day = Date.parse(value);
+                        if (day == NaN) throw new Error("Invalid query: missed")
+                        value = {"missed_days": {"start": {$gte: day}, "end": {$lte:  day}}};
+                    } else if (param == "type") {
+                        value = value.toLowerCase();
+                        if (!Object.values(AbsenceType).includes(value)) throw new Error("Invalid query: type")
+                    } else if (param == "status") {
+                        value = value.toLowerCase();
+                        if (!Object.values(Status).includes(value)) throw new Error("Invalid query: status")
+                    }
+    
+                    filter[param] = value;
+                }
+                // let isEducator = await isEducator(req.body.uid);
+                // if (!isEducator) filter.uid = req.body.uid;
+
+            });
+        } catch (e) {
+            res.status(400).json({message: e.message})
+        }
+
+        try {
+            let reports = await AbsenceModel.find(filter).exec();
+            return res.json(reports);
+        } catch (e){
+            console.error(e)
+            return res.status(500).end();
+        }
+
+    },
+
+    deleteAbsences: async function (req, res) {
+        // let isEducator = await isEducator(req.body.uid);
+        // if (!isEducator) res.status(401).end();
+        
+        try {
+            await AbsenceModel.deleteMany({});
+            res.status(204).end()
+        } catch(e) {
+            console.error(e)
+            res.status(500).end();
+        }
+    },
+
+    // Methods for /absence/:id route
+
+    getAbsenceId: async function (req, res) {
+        const{ id } = req.params
+        try {
+            const _id = new ObjectID(id)
+            const filter = {_id};
+            // let isEducator = await isEducator(req.body.uid);
+            // if (!isEducator) filter.uid = req.body.uid;
+            try {       
+                let result = await AbsenceModel.findOne({filter})
+                if (result) return res.json(result);
+                else return res.sendStatus(404).end();
+            } catch (e) {
+                console.error(e)
+                return res.sendStatus(500).end();
+            }
+        } catch(e) {
+            return res.status(400).send('Invalid id format').end()
+        }
+    },
+
+    // deleteAbsence: async function (req, res) {
+    //     // let isEducator = await isEducator(req.body.uid);
+    //     // if (!isEducator) res.status(400).end();
+    //     const{ id } = req.params;
+    //     try {
+    //         const _id = new ObjectID(id);
+            
+    //         try {
+    //             let result = await mongoose.connection.db.collection('absences').findOneAndDelete({_id});
+    //             if (result.value){
+    //                 if (result.value.files) await removeFilesHelper(result.value.files);
+    //                 res.sendStatus(204);
+    //             }
+    //             else res.sendStatus(404).end()
+    //         } catch (e) {
+    //             console.error(e)
+    //             return res.status(500).end();
+    //         }
+    //     } catch(e) {
+    //         res.status(400).send("Invalid id format")
+    //     } 
+    // }
+
+    updateAbsence: async function (req, res) {
+        // let isEducator = await isEducator(req.body.uid);
+        // if (!isEducator) res.status(400).end();
+        let {status, rationale, type} = req.body;
+        let { id } = req.params;
+        let updatePayload = {};
+        let _id;
+        try {
+            if (typeof type == "string" && Object.values(AbsenceType).includes(type.toLowerCase())){
+                updatePayload.type = type.toLowerCase();
+             }
+             if (typeof rationale == "string") {
+                 updatePayload.rationale = rationale;
+             }
+             if (typeof status == "string" && Object.values(Status).includes(status.toLowerCase())) {
+                 updatePayload.status = status.toLowerCase();
+             }
+             _id = new ObjectID(id);
+        } catch(e) {
+            return res.status(400).json({message: e.message})
+        }
+        updatePayload = (!_.isEmpty(updatePayload)) ? {$set: updatePayload} : {} 
+        try {
+            let newReport = await AbsenceModel.findOneAndUpdate({_id}, updatePayload, {new: true});
+            if (!newReport) return res.send(404).json({message: "An absence report by that id does not exist"});
+            res.status(200).json(newReport);
+        } catch (e) {
+            console.error(e)
+            res.sendStatus(500);
+        }
+        
+    },
+
+    createAbsenceReport: async function (req, res) {
+        const files = req.files;
+        //console.log("PRINTING OUT THE BODY");  
+        //return res.send(req.body["uid"]); 
+        let form;
+        try {
+            console.log(req.body)
+            form = JSON.parse(req.body.form); 
+        } catch(e) {
+            console.error(e)
+            return res.status(400).json({message: "Invalid JSON in form key: " + e.message})
+        }
+
+        let user = await UserModel.findOne({did}).exec();
+        if (!user) return res.status(400).json({message: "Your user was not found. Please contact the system administrator"});
+        try {
+            let {did, type, rationale, courseName, missed_days: {start, end}, email} = form
+            if (user.courses.indexOf(courseName) === -1) throw new ServerError("Student not enrolled in that course", 400);
+            let sectionId = SectionModel.find({courseName, sectionId: {$in: user.sections}});
+            let newReport = new AbsenceModel({
+               type,
+               rationale,
+               courseName,
+               sectionId,
+               missed_days: {start: Date.parse(start), end: Date.parse(end)},
+               email,
+               files: []   
+            });
+
+            if (files) {
+                let ids = await uploadFileHelper(files);
+                console.log(ids)
+                newReport.files = ids;
+            }
+
+            let result = await newReport.save();
+            return res.status(201).json(result);
+
+        } catch (e) {
+            return res.status(400).send(e.message).end();
+        }
+    },
+
+    getFiles: async function (req, res) {
+        const { id } = req.params;
+        try {
+            const _id = new ObjectID(id);
+            try {
+                let report = await mongoose.connection.db.collection('absences').findOne({_id})
+                if (!report) {
+                    return res.status(404).json({message: "No absence report exists with that id"});
+                }
+
+                let metadata = await mongoose.connection.db.collection('fs.files').find({
+                    _id: {
+                        $in: report.files.map(id => new ObjectID(id))
+                    }
+                })
+                metadata = await metadata.toArray();
+                res.status(200).json(metadata)
+            } catch (e) {
+                console.error(e)
+                return res.sendStatus(500).end()
+            }
+          } catch(err) {
+            return res.status(400).send("Invalid id format"); 
+          }
+    },
+
+    fetchFile: async function (req, res) {
+        const { id, fileId } = req.params;
+        let _id, _fileId;
+        try {
+            _id = new ObjectID(id);
+            _fileId = new ObjectID(fileId)
+        } catch(e) {
+            return res.status(400).json({message: "Invalid id format"})
+        }
+
+        let report = await mongoose.connection.db.collection("absences").findOne({_id});
+        if (!report) {
+            return res.status(404).json({message: "An absence object by that id does not exist"})
+        }
+
+        if (!report.files.some((storedFileId) => storedFileId.equals(_fileId))) {
+            return res.status(404).json({message: "Absence object specified does not contain any file by that id"});
+        }
+
+        res.set("Content-Type", "image/jpeg")
+        const bucket = new GridFSBucket(mongoose.conntection.db);
+        let buffers = []
+        let downloadStream = bucket.openDownloadStream(_fileId)
+        downloadStream.on('data', (chunk) => {
+            buffers.push(chunk);
+        }).on('error', (e) => {
+            console.error(e)
+           return res.sendStatus(500);
+        }).on('end', () => {
+            let buffer = Buffer.concat(buffers);
+            res.send(buffer);
+        });
+    },
+
+    uploadFiles: async function (req, res) {
+        let _id = req.params.id;
+        try {
+            _id = new ObjectID(_id);
+        } catch (e) {
+            res.status(400).json({message: "Invalid id format"});
+        }
+
+        let files = req.files;
+        if (!files) {
+            res.status(400).json({message: "No files were present to upload"});
+        }
+
+        try {
+            let report = await mongoose.connection.db.collection("absences").findOne({_id});
+            if (!report) res.send(404).json({message: "An absence report with the id does not exist"})
+            if (report.files.length > 0) await removeFilesHelper(report.files);
+
+            let fileIds = await uploadFileHelper(files);
+            let result = await mongoose.connection.db.collection("absences").updateOne({_id}, {$set: {files: fileIds}});
+            res.json(Object.assign(report, {files: fileIds}))
+        } catch (e) {
+            console.error(e)
+            res.sendStatus(500);
+        }
+    }
+}

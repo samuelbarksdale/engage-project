@@ -1,0 +1,92 @@
+import path from 'path';
+import _ from 'lodash';
+import config from './config';
+
+export default function Routes(app, ctx) {
+    const LEC = 'LEC';
+    const DIS = 'DIS';
+    const OTH = 'OTH';
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../public"),
+        }
+        res.sendFile('./index.html', options)
+
+    }
+
+    async function getAttendance(req, res) {
+        const {page, sort, student_id, section_id, course_id, type, start, end} = req.query
+
+        const timestamp = {};
+        const query = {};
+        if (student_id) Object.assign(query, {student_id})
+        if (section_id) Object.assign(query, {section_id: section_id.toUpperCase()})
+        if (course_id) Object.assign(query, {course_id: course_id.toUpperCase()})
+        if (type) Object.assign(query, {type: type.toUpperCase()})
+        if (start) timestamp["$gte"] = start
+        if (end) timestamp["$lte"] = end
+        if (!_.isEmpty(timestamp)) Object.assign(query, {timestamp})
+
+        try {
+            let result = await ctx.db.collection('attendance').find(query)
+            // Pagination and sort will happen here
+            const results = await result.toArray();
+            return res.json(results);
+        } catch (e) {
+            console.error(e)
+            return res.status(500).end();
+        }
+ 
+    }
+
+    async function logAttendance(req, res) {
+        const {student_id, section_id, type, location} = req.body;
+
+        if (!student_id || !section_id || !type || location.lat || location.lng) return res.status(400).end()
+        if (type != LEC && type != DIS && type != OTH) return res.status(400).end()
+
+        // VALIDATE WITH COURSE SERVICE
+        // const endpoint = "";
+        // const response = await fetch(config.courseServiceUrl + endpoint);
+        // const json = await response.json();
+
+        let now = new Date();
+        const timestamp = now.getTime();
+        let courseRe = /^(\w+)\-/
+        let course_id = courseRe.exec(section_id)[1]
+        const log = {
+            "student_id": student_id,
+            "timestamp": timestamp,
+            "section_id": section_id,
+            "course_id": course_id,
+            "meeting_type": type
+        }
+        try {
+            let result = await ctx.db.collection("attendance").insertOne(log)
+            let newLog = result.ops
+            res.json(newLog)
+        } catch (e) {
+            console.error(e)
+            return res.status(500).end()
+        }
+        
+
+    }
+
+    async function deleteAttendance(req, res) {
+        try {
+            await ctx.db.collection("attendance").deleteMany({});
+            res.status(204).end()
+        } catch(e) {
+            console.error(e)
+            res.status(500).end();
+        }
+    }
+
+    app.get('/', serveDocs);
+    app.route('/attendance')
+        .get(getAttendance)
+        .post(logAttendance)
+        .delete(deleteAttendance)
+}
+

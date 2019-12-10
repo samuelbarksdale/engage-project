@@ -1,0 +1,24 @@
+const en = {
+    courseCard: {
+        button: "View Class",
+    },
+    tabs: {
+        courseTabText: 'Courses',
+        engagementTabText: 'Engagement',
+        absenceRequestsTabText: 'Absence Requests'
+    },
+    routesPaths: {
+        courses: 'courses',
+        course: 'course',
+        absenceRequest: 'absence-request',
+        geoLocation: 'geo-location',
+        tabNavigator: '',
+        coursesStack: '',
+        linksStack: 'links-stack',
+        settingsStack: 'settings-stack',
+    },
+    auth: {
+        uidTextPlaceholder: 'Enter your UID',
+    }
+};
+export default en;

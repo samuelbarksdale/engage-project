@@ -1,0 +1,73 @@
+import path from 'path';
+import _ from 'lodash';
+
+export default function Routes(app, ctx) {
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../docs"),
+        }
+        res.sendFile('./output.html', options)
+
+    }
+
+    async function getAllAbsences(req, res){
+        const{course_name, section_id} = req.query
+        
+        if (course_name) Object.assign(query, {course_name})
+        if (section_id) Object.assign(query, {section_id})
+
+        try {
+            let result = await ctx.db.collection('absence').find(query)
+            const results = await result.toArray();
+            return res.json(results);
+        } catch (e){
+            console.error(e)
+            return res.status(500).end();
+        }
+
+    }
+
+    async function getAbsence(req, res) {
+        const{absence_id} = req.query
+
+        if (absence_id) {
+            Object.assign(query, {absence_id})
+            try {
+                let result = await ctx.db.collection('absence').find(query)
+                const results = await result.toArray();
+                return res.json(results);
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end();
+            }
+        } else {
+            return res.status(400).end()
+        }
+
+    }
+
+    async function deleteAbsence(req, res) {
+        const{absence_id} = req.query 
+
+        if (absence_id) {
+            Object.assign(query, {absence_id})
+            try {
+                let result = await ctx.db.collection('absence').deleteOne(query)
+                const results = await result.toArray();
+                return res.json(results);
+            } catch (e) {
+                console.error(e)
+                return res.status(500).end();
+            }
+        } else {
+            return res.status(400).end()
+        }
+    }
+
+    app.get('/', serveDocs);
+    app.route('/absences')
+        .get(getAllAbsences)
+        .get(getAbsence)
+        .delete(deleteAbsence)
+
+}

@@ -1,0 +1,71 @@
+import React from 'react'
+import { Button, Card, Table  } from 'react-bootstrap';
+
+const coursePORT = process.env.COURSE_PORT
+const courseServiceUrl = `http://course:${coursePORT}`;
+
+class AttendanceTable extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      students: []
+    }
+  }
+
+  renderTableData() {
+    return this.state.students.map((student, index) => {
+       const { uid, name, attendances, email } = student //destructuring
+       return (
+          <tr key={uid}>
+             <td>{uid}</td>
+             <td>{name}</td>
+             <td>{attendances}</td>
+             <td>{email}</td>
+          </tr>
+       )
+    })
+  }
+
+  render() {
+    return (
+        <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Username</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Mark</td>
+            <td>Otto</td>
+            <td>@mdo</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Jacob</td>
+            <td>Thornton</td>
+            <td>@fat</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td colSpan={2}>Larry the Bird</td>
+            <td>@twitter</td>
+          </tr>
+        </tbody>
+      </Table>
+
+        )
+    } 
+
+    componentDidMount() {
+      fetch(courseServiceUrl)
+        .then(response => response.json())
+        .then(data => this.)
+    }
+}
+
+export default AttendanceTable; 

@@ -1,0 +1,30 @@
+version: '3'
+services:
+  ui:
+    build: ./src/client
+    ports:
+      - 3000:3000
+    volumes:
+      - ./src/client:/app
+      - /app/node_modules
+    depends_on:
+      - server
+  server:
+    build: ./src/server
+    env_file:
+      - configuration/development.env
+    ports:
+      - 8080:8080
+    volumes:
+      - ./src/server:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
+    volumes:
+      - data:/data/db
+    ports: 
+      - 27017:27017
+volumes:
+  data:

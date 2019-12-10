@@ -1,0 +1,44 @@
+import React from 'react';
+import CourseCard from "./CourseCard";
+import axios from "axios";
+import api from '../api';
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link,
+    Redirect
+  } from "react-router-dom";
+  
+export default class CourseList extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {courses: []}
+    }
+
+    async componentDidMount() {
+        
+        try{
+            let result = await api.getMyClasses();
+            this.setState({courses: result});
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+
+    render() {
+        return (
+            <div>
+                {
+                   ( this.state.courses.length === 0)
+                    ? <p>You don't have any courses</p>
+                    : this.state.courses.map((info) => {
+                        return <CourseCard {...info} user={this.props.user}/>
+                    })
+                }
+            </div>
+        ) 
+    }
+}
+    

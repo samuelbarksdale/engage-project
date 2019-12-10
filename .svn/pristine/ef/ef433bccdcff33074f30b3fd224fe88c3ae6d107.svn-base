@@ -1,0 +1,31 @@
+import express from 'express';
+import mongoose from 'mongoose';
+
+try {
+	await mongoose.connect('mongodb://localhost:27017/myapp', {useNewUrlParser: true});
+} catch {
+	return console.log("error connecting to mongodb")
+}
+
+const app = express();
+const port = 8080;
+app.get('/', (req, res) => {
+//put a database dependency to test connection here
+    res.send("Hello, from the course service! x2")
+})
+
+
+app.post('/courses', (req, res) => {
+	res.send("You have reached the course endpoint")
+})
+
+app.get('/courses', (req, res) => {
+	res.send("You have reached the course endpoint")
+})
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.error(err)
+    }
+    return console.log(`Server listening on port ${port}`);
+})

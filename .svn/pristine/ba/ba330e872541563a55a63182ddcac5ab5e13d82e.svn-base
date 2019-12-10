@@ -1,0 +1,304 @@
+Cover Page
+
+ 
+
+ 
+
+# 1. INTRODUCTION
+
+## 1.1 Purpose
+
+The goal of this document is to propose a solution to the student engagement problem presented by our 435 Professor, Jim Purtilo, and our client, Larry Herman. Our solution is primarily intended to implement Larry's requested functionalities, however we have taken Jim's insights into account as well to present a design that satisfies both of them.
+
+Given the limited time that we have this semester, we have decided to limit the scope of our product to just those professors/instructors and students in the University of Maryland Computer Science major. 
+
+## 1.2 Definitions
+
+1. *Users* refer to any student who is participating in the engagement system
+2. *Admins* refer to any educator who has authority over lectures and classes
+3. *Disruptive* refers to
+4. *Engagement* refers to the general set of metrics which describe how well a student is participating and paying attention in class. These metrics include: attendance, attention, sentiment, comprehension. 
+5. *Attention* refers to the amount of time a student spends listening to the educator. A student will low attention might be on their phone, or might consistently leave lecture early.
+6. *Sentiment* refers to the general feeling a student has about a lecture. This is likely a spectrum or multiple spectrums of feelings.
+7. *Comprehension* refers to the amount and depth of information a student retains from lecture. It's synonymous with understanding.
+
+## 1.3 Document Overview
+
+One paragraph explaining this entire document. Generates interest and our authority to be speaking on this topic.
+
+​	
+
+# 2.  TECHNICAL SOLUTION
+
+Our outlined solution which agrees with the Success Metrics, has concrete evidence for its future success (lo-fi renderings), fits within the scope of this class (time, personnel, computing resources), and has well defined MVP
+
+Our technical solution can be thought of as a two-pronged approach, satisfying both the customer and providing a starting area for future projects desiring to unify UMD's data. 
+
+## 2.1     Problem Statement
+
+Educators struggle to track non-grade metrics like attendance and attention within large lectures and classes. They want to improve the learning outcomes of their students. Miscommunication during lectures can drive students to lower their attendance or overall course engagement. These "at-risk" students are mostly invisible to educators who can't possible remember all three hundred faces and their respective attendances. By digital login and tracking attendance, we can enable educators to discover problematic trends in their students and act upon them. 
+
+## 2.2	Problem Perspective
+
+The twenty-first century is defined by data. Within the last two years, 90% of all data was generated, and that trend keeps increasing. We've entered into a time where no amount of human brain power can parse and manage all that data.
+
+We've also have the ability to begin translating the real-world into the easily accessible and manipulatable digital world. The Internet of Things is a terribly powerful concept, augmenting our reality with digital sensors, giving us crucial insight into how our institutions and processes are working--or not working.
+
+Industry has a clear jump on Big Data because of the unfathomable profit potential. However, education has failed to adopt IoT and Big Data as adamantly as industry. Education has great potential for such data collection and analysis techniques. Much of the psychology and science behind learning is still a mystery, but that is not an excuse to shy away from pedagogical experiments. We the new data revolution, we are primed to bring data insights into the classroom, bestowing super-human powers to the educator and shaping the classroom workflow to work for students. 
+
+Not only have we found a need for data within educational institutions, but a pathway for data collection and management is a generalized need across multiple disciplines. You can imagine a host of sociological, political, psychological, and other problems which are intractable because of the lack of data or the wide dispersion of data. Abstracting away the nuts and bolts of data collection, aggregation, and management will free experts to productively engage with analysis. 
+
+When experts are more productive, the world get better, faster.
+
+We can imagine a final ecosystem of data sensors and sources bound to a particular institution, enabling researchers, developers, and educators to easily gather, interpret, and add data. For the technical illiterate, we envision a system that enables users to create event-based macros leveraging the data sources and I/O built into the ecosystem. There would also be some form of "data SDK" that would allow for rapid wrapping and deployment of data sources and sensors into the data mesh. Adding data into the mesh is as important as unifying it. 
+
+Further, although this system provides flexibility and extensibility, its primary strength lies within the "built-ins". These built-ins are a certain set of software signals, sensors, and sources which can be deployed generically. For instance, we can envision a generic data dashboard which automatically plugs into the ecosystem and allows for metric analysis. Another built-in could be a mobile application wrapper that could stand-alone or operate in tandem with an institution's own mobile application, which automatically reports data to the larger ecosystem. 
+
+Unfortunately, constructing such a "unified data mesh" is exceedingly complex and leaves the scope of this project. The specific solution we have decided upon is primarily management based but will also interact with a "unified data api" which we believe is a crucial pillar of the final unified data platform. This will provide a starting architecture for future development endeavors.
+
+## 2.3     Product Functions
+
+Actual solution. Include enough detail to show we have a legitimate plan, but not so much that it drags and confuses. Touch on computing resources required. Include information about how it will be used.
+
+​	 As we mentioned previously, we have restricted our solution to a subset of the greater data problem. Therefore, we have segmented the solution into three main parts:  Attendance Service, Absence Service, and the management web-powered mobile-oriented front-end application. 
+
+​	Each component will interoperate to provide the Customer with an integrated workflow to log attendances, sort through student absences, and visualize student data between multiple data sources.
+
+​	We assume all services will conform to FERPA regulations. 
+
+	#### Attendance
+
+​	The attendance data will be collected and managed through the attendance microservice and a generic front-end application used for data input and visualization. 
+
+	##### Attendance Microservice
+
+​	The attendance microservice will provide an API exposing CRUD operations on attendance data. The attendance collection application will post student attendance to this service, which will verify the application has proper permissions, and perform necessary business logic to match the attendance with a student record. The attendance system will save attendance in a persistent database, with functionality to support multiple attendance tables for the  same student across courses and semesters.
+
+​	In particular the attendance service shall provide the following functionality:
+
+1. Service shall authenticate and authorize requests to enable permissions on data access.
+2. Service shall expose an api route to update a student's attendance for a particular class.
+3. Service shall expose an api route to read attendance data for a particular class or student.
+4. Service shall expose query functionality to filter and limit attendance data based upon semesters.
+5. Service shall expose an api route for administrators to update a student's attendance.
+6. Service shall expose an api route to return a binary answer for a student's attendance of a requested class.
+7. Service shall expose an api route to return time data for when a student was in attendance.
+8. Service shall expose an api route for the verification of student's location during attendance collection.
+9. Service shall **not** store student location data, if student location data becomes relevant to the solution.
+
+##### Absence Microservice
+
+​	The Absence microservice will provide an API exposing CRUD functionality for "absence reports" and a workflow staging pipeline for reports between the educator and the student. 
+
+
+
+1. Service shall expose an api route to create a report for a specified course and student.
+2. A report shall consist of a required free text rationale, a required selection of dates missed, a required selection of for type of absence, and an optional file upload for supporting documentation.
+3. Service shall expose an api route to read all absence requests for a particular course or student. 
+4. Service shall expose an api route to update the current state of a request. 
+5. Service shall contain four states: "Waiting for Approval", "Waiting for Change", "Approved", and "Denied".
+6. Service shall expose an api route to read a student's absence history.
+7. Service shall expose an api route to read absence requests with filtering by status or course.
+8. Service shall expose an api route to create course schedules.
+9. Service shall expose an api route update course schedules.
+10. Service shall expose an api route to read a student's missing assignment list.
+
+
+
+##### Unified Data Api
+
+​	In order to begin the unified data mesh for the university, we will construct a single entry point for the data.  Accessing the entire data catalogue of the university will then become a matter of interacting with a single api, instead of many apis. 
+
+​	To accomplish this feat, we envision a thin GraphQL api which will aggregate multiple disjoint data sources into one interface. Why is this important? GraphQL allows us to represent data as statically-typed objects. Each object has a finite set of fields capturing either atomic data types like strings, or additional object data types. This type of paradigm is useful for combining multiple related but independent data sources together in a flexible manner. The declarative nature of GraphQl corresponds naturally with our goal for a declarative complexity-free unified data mesh.
+
+​	API consumers (in the form of web applications, mobile applications, other services, etc. ) can interact with the unified api to query for the entire UMD-related data. Conceptually, the complex system of data sources, becomes one object someone can pick and choose from. 
+
+​	For instance, if a consumer is interested in student data (and has proper permissions) they can query for student objects from the GraphQL layer, and partition the object into fields they desire, such as attendance,  which will know how to reach out to the necessary RESTful APIs.
+
+##### Mangement Front-end
+
+​	The management front-end application is the primary driver of the two microservices. It will be in the form a a web-powered mobile-oriented application. Additionally, user permissions will expose different functionality for educators and students. For educators, the application will provide administrator functionality. This includes reading all data for their students, and updating it accordingly. This application will also house the analytics panel, where the educator can view supported metrics.
+
+​	For a student, this application will perform differently. Instead of management capabilities, a student will have data input capabilities. They can submit absence requests and log attendance manually if need be. 
+
+​	The management front-end application will fetch data from the supporting back-end but will be proxied through the unified data api.
+
+
+
+####2.2.1
+
+We make distinctions within our solution between multiple independent systems with differing requirements. The primary system we define is the attendance system. The attendance system will be responsible for collecting, managing, and displaying attendance and roster data. It is segmented into two parts: an Attendance backend service with database capabilities, and an attendance front-facing web application. The requirements for the Attendance system follow:
+
+**Hard Requirements**
+
+1. Program shall be able to collect attendance by cross referencing device location and building location.
+2. Program shall provide an administrator portal for create, read, update, delete (CRUD) operations on attendance and roster data.
+3. Program shall identify and authenticate students within CAS.
+4. Program shall provide a method for students to mark days they will be/were absent and submit documentation to support their claims.
+5. Program shall provide students with an option to upload supporting documentation.
+6. Program shall allow the admin to create class, section, and student rosters.
+7. Program shall allow the admin to view attendance data by class, by section, and by student.
+8. Program shall allow the admin to archive class data, to remove from day-to-day view, but still have it saved for future analytics. 
+9. Program shall provide the admin with actionable insights which could include displaying a mark next to students with low attendance.
+10. Program shall utilize proper API practices to allow for extensibility and for other developers to interact with it.
+11. Program shall conform to FERPA regulations.
+
+
+
+**Desirable Goals**
+
+1. Attendance collection should be non-disruptive.
+2. Attendance program should be resilient to network downtime, location inaccuracies, and other environmental factors, by being easily recoverable.
+3. Program should store geolocation and time data, temporarily, in case automatic check-in feature cannot connect to the api.
+4. Program should allow for graphical and analytical display of data for students and admins.
+5. Program should allow admins to export data in a common data format like csv.
+6. Program should handle a large number of requests at any particular moment, if multiple three hundred people lectures across the department or school check-in during the same time.
+
+
+
+​	The second system we are imagining is the Absence System. The Absence System will allow for students to report their absences, provide supporting documentation, and receive action items. It also allows educators to approve or deny requests. 
+
+1. Students shall be able to report their missing attendance.
+
+    1. Rationale for absence
+    2. Selection for type of absence (Jury Duty, Medical emergency, other, etc.)
+    3. Preemptive reporting and retroactive reporting
+    4. Documentation upload - Optional for initial submission.
+
+2. Educator shall be able to see all incoming requests
+
+3. Educator shall be able to request documentation, reject, or approve absence requests
+
+4. Approved absence requests should update the students attendance for the approved dates
+
+5. Educator shall be able to filter requests by status, student, course, coursework
+
+6. Educator shall be able to create course schedules with types of assignments
+
+7. Educator shall be able to update dates of the schedules.
+
+      
+
+####2.2.2
+
+**Customer Characteristics **
+
+There are two main end-users for our system. The instructor(s) and the students. We will first focus on the key characteristics of the instructor. Instructors will interface with the system to perform the majority of the key functionalities presented. First and foremost, the application provided will allow a place for instructor(s) to see aggregated attendance information for individual students. This information will be collected whenever the instructor(s) deem fit during the lecture. The application will also show basic descriptive statistics on class-wide attendance information. The application will also provide means of aggregating information offered through the class engagement activities. This information will be aggregated and summarized in brief snapshots for the instructor(s) to display to their class should they want to. Additionally, instructor(s) will have the ability to review and assess the numerous incoming absence request forms and approve/deny them based on the information provided. This approval process will also provide instructor(s) with a means of reaching out to the student(s) that will be absent and notify them of missed activities or possible deadline extensions for assignments. Finally, the application will provide means for the instructor(s) to view aggregated attendance data, along with other desired metrics such as submit server information, in an aggregated fashion where they can use different sources of information to cross-correlate and get a more accurate understanding of how not only the entire class is faring, but how individual students are doing as well. 
+
+The second end-users are the students. Students will be mainly interfacing with our application for four key functionalities. The first is their ability to check-in to class when specified by the professor through the geolocation capabilities of our application. This information will be automatically recorded and will also be presented to the student - although they will only be able to access their own attendance records - this in turn would fulfill the second key requirement. The third key functionality is the ability for students to submit absence request forms to their instructor(s) in the case that they will not be able to make it to class, and be able to receive any feedback from the instructor based on the date(s) of absence. Finally, students should have the ability to to interact with in-class engagement activities set forth by the professor during lectures in the form of live questionnaire responses. In terms of specific platforms, we are aiming to get a mobile-friendly web product available to the students, however should time permit, we will also tbe aiming towards native mobile applications to help ease the overall workflows. If we have more time left-over even after that, we would be looking into developing Elms plugins to help limit the number of extra software's required for the students and the instructor(s).
+
+Here's Ed. **Ed is an Educator**. He's having some issues teaching students. He's too busy. There are too many menial administration tasks that need to be done, like marking attendance. What's more, his lectures are so large, he doesn't know who's who and what they're all thinking. Ed just wants to do what he loves, teach!
+
+​	One of Ed's colleagues, Larry Herman, told him of a neat educational management system, called Engage. Ed is astonished, this is just what he needs. He navigates to the Engage website or downloads the mobile application, then **creates an Educator account**. 
+
+​	The system prompts Ed to **create a class**. Ed decided to manage his classes next semester with Engage, so he create two classes. For each class, he **inputs start and end times, building locations, sections, capacity, and student rosters**. 
+
+​	When Ed finishes setting up his class space, he sees them arranged on a dashboard. Clicking on one brings up a more detailed view of the class. Since the semester hasn't started yet, he doesn't see much activity, just some empty graphs.
+
+​	The summer is at a close and the semester starts back up. Ed is ready and excited to test out Engage's educational management features. On the first day of class, Ed wants students to join his class, so he tells his **students to download the Engage mobile application**. Every registering student needs a class code, so next, he projects the **class code found in his administrator's class view**.
+
+​	Here's Stu. **Stu is a Student**. She has a class with Educator Ed. Per his instructions, **she downloads the mobile application** on her Apple iPhone. She launches the application. A sign-in page connected to the University's CAS pops up. After signing in, the application prompts her to enter a class code. She enters the code Ed projected. Success! She's now registered for Ed's class. There is another bright, happy message telling her attendance has been checked. Good job, Stu! The next time she attends lecture, she won't have to even pull out her phone. **Engage will automatically detect when she arrives in the lecture hall and will report her attendance accordingly.** 
+
+​	After data points start coming in, Ed can begin **viewing metrics graphically**. There are graphs **showing daily, weekly, and monthly attendance**. Ed can even **display metrics from just one class or just one student** if he wants. He can also **view attention metrics**, gauging for how long students are browsing their phones, or how many of them leave lecture early. 
+
+​	Ed receives an email from Stu, the student. Stu is informing Ed that she has been absent due to an illness. Ed groans, managing absences are always painful. Thankfully, Engage has got him covered. **Ed remembers Engage has a built-in absence reporting system**. He forwards instructions to Stu.
+
+​	Stu wants to mark her absent days and submit documentation so she can get her absences excused. She opens the mobile application and **selects the absence reporting tab**. **She notes the days she was gone, provides a rationale, and uploads the note her doctor gave her**. Now, she must wait for the educator.
+
+​	Ed receives Stu's report, and **approves it**. **Engage will automatically update Stu's attendance record to adjust for her excused absences.** Then, if Ed uploaded a course schedule, Engage will inform both Ed and Stu of the material that Stu missed. That way, Stu can get caught up, and Ed doesn't have to cross-examine his schedule with her absences. 
+
+​	Unfortunately, Stu begins to struggle in Ed's class. She starts browsing Instagram during lecture, leaves early, and sometimes never shows up. Luckily, Engage is looking out for her. The next time Ed opens the dashboard, the **app notifies him about Stu's difficulty engaging with the course**. From there, Ed can reach out and attempt to address some of her issues before it's too late. 
+
+​	At the end of the semester, Ed is quite happy. He can view attendance and attention metrics and get a better sense of the coming and goings of his course. He also didn't have to spend time tracking down absence reports, it's all automatic. He even sent out **personalized after-hours notifications to at-risk students**. Did his personalized attention work? He can check attendance metrics of those students and find out. Ed is glad he chose Engage, but he hasn't even touched the **polling or survey features, which provide insight in student sentiment and comprehension**. No worries, just like every educator's teaching style, Engage is flexible. But, when Ed is ready to increase his *"LectureIQ"*, Engage will be waiting.
+
+
+
+**Customer Storyline**
+
+### 2.3.2   Lo-fi Renderings (or code)
+
+Project description says teams that fail do not have lo-fi renderings or basic code examples.
+
+## 2.3     Team Management
+
+How we will organize to reach the timeline specified below. Which teams will we have? What are they responsible for? How will we work in parallel?
+
+## 2.4     Timeline
+
+What is our timeline to finish the project in the scope of the semester? What deliverables will we finish when? How will we handle taking on new features (in addition to the attendance task?)
+
+From Purtillo: We will want you to call out at least the major tasks, story lines or activities necessary to complete your project, and show how composing them should lead to success. Then, as you proceed with the build, we will want you to maintain (e.g. on one of your groups' web sites) a graphic summary of the status of completion, so we can track progress. Are you getting closer or further away from success? The 'manager' will want to know at a glance. (We will talk more in class about a variety of tools for this, such as JIRA or Trello. We hope you will come to see such tools as aids to success, not busywork or barriers. Learn to use these to improve your productivity.) The cost estimate should be consistent with the timeline; potentially you will reflect on how to create a Gantt chart
+
+### 2.4.1               Delivery Manifest
+
+This is basically a checklist to summarize clearly what we're getting and how we will know we got it. It is used at delivery to, well, check that we got what you promised
+
+## 2.5     Alternate Solutions
+
+There are two great ways to ensure your green light process is painful, drawn out, complex and jam packed with frustration. One is to submit a proposal that does not include analysis of alternate design approaches with an explanation as to why one has been chosen in particular.
+
+#### Foreseen Risks and Preliminary Solutions
+
+##### 1. Geolocation
+
+​	There are many technical risks surrounding the geolocation capabilities of our solution. Firstly, acutely accurate geolocation relies on a combination of GPS, cell tower triangulation, and Wi-Fi network connectivity. Tracking attendance based upon geolocation has many degrees of failure. If GPS is unable, then any form of geolocation is essentially impossible. Further, even with a GPS connection, location accuracy may be too imprecise. Relying on cell tower and Wi-Fi triangulation can help us pinpoint locations, but if anyone of those are inaccessible, then the problem remains.
+
+​	Ostensibly, we probably need to know the exact classroom location of a student. However, there may be unique correlations in reality that we can leverage. Firstly, we can assume that interesting geolocation points are areas which contain a large amount (80+) of users during a particular time. Suppose we have many students registered in the same class. `Students 1...N` have an accurate GPS signal but `Student N+1` does not. Given these circumstances, it might be possible to claim, with a certain probability, that `Student N+1` is present in the class if they are within a certain distance threshold to `Students 1...N` .  
+
+​	Alternatively, we might be able to leverage a slightly simpler heuristic. It may not matter what classroom the user is in after all. Given a student in a class which has a class start time and a building location, it might be accurate enough to claim: if a student is in the same building as their class during the class' interval, then it is reasonable to assume the student is in attendance. 
+
+​	The likely solution is not clear. We will have to experiment with modern geolocation capabilities and the environmental factors on campus. 
+
+##### 2. User Adoption
+
+​	We have struggled to imagine why a user might want to participate in our system. Why should they download an app or log into a website? Particularly, if that application will "hold them accountable" by collecting attendance and engagement data. 
+
+​	If we had a subtle manner of tracking attendance which doesn't depend on any user interaction, then the question would be trivial. We can imagine systems which use local cell towers to find the location of cell phones, or wireless access points which track cell phones as they automatically ping near-by Wi-Fi networks. Yet, many of those solutions seem technically advanced, costly, possibly illegal, and probably immoral.
+
+​	Such lightweight and "hidden" solutions also lack extensibility. Since the problem can be applied to the question of engagement, generally, we desire a system capable of tracking other engagement metrics. Calculating the ratio between a student's screen time and listening time would mostly likely be intractable using clever methods like packet listening on a "lecture Wi-Fi network".
+
+​	Looking for inspiration at educator's traditional methods, we find that lecture quizzes or polls using clicker technology are useful to gauge certain engagement metrics and as a byproduct, collect attendance. There are a few issues with this method, however. Educators must create such quizzes and must ensure they are "useful". Additionally, because digital quizzes rely on computers, educators and students run into technical issues. There is also the human factor involved. Class quizzes at the beginning of the lecture have the high potential of missing a large segment of latecomers.  Also, simply tracking attendance becomes a process. An educator must stop class for everyone to submit input. Clickers and other polling solutions also lack flexibility. Answers are multiple choice, and either you force students to use pricy calculator-like devices to ensure attendance, or risk the software outcome of students answering anywhere. Clickers are also time based.
+
+​	Although using direct interaction with students can collect attendance, it's suboptimal. Nevertheless, digital polls are useful. They give students a reason to use our application. An educator who uses digital polling will compel students to download our application so they can complete these polls. Once the application is downloaded, we can track attendance without any input form the user. Even if the educator rarely uses polls, the possibility of them (along with additional benefits) should be an effective incentive.
+
+​	We further imagine additional benefits which would incentivize students. Although attendance and general engagement can't really be graded, there might be room for an educator to give out "good faith" points. Students whose profile leans towards higher engagement, might be at a better bargaining position for a slight grade bump-up at the end of the semester, an assignment extension, or letter of recommendation. Further, the analytics the educator collects can directly improve the lecture, leaving the students more satisfied. Future features might even "gamify" the engagement system. Features such as a leaderboard, badges, and integration with software such as Portfolium could provide a game-like drive within the college atmosphere as well as post-college benefits. It seems likely that college engagement and participation metrics would be of great use to employers struggle to gauge a new graduate's personality, work ethic, and teamwork skills. 
+
+3. #####Privacy
+
+
+
+# 3  TESTING
+
+How will we test our product to prove that it fulfills the needs of the client and professor?
+
+## 3.1     Success Metrics
+
+List of non-conflicting tests that the product must perform in order to qualify as a ‘success’. Must be aligned with both Purtillo’s and Larry’s definition of ‘success’.
+
+## 3.2     Test Plan
+
+Matched with the timeline. How we will test along the way to ensure we are meeting the timeline goals to the highest quality possible.
+
+## 3.3     Acceptance Testing (w/ Larry)
+
+ 
+
+# 4              COST ESTIMATE
+
+Make sure you have a clear and supported prediction of what it will take to get you from the point of the green light approval to the walk through (i.e. when the build is done.) To be clear: this is not an invitation to guess. We don't want your opinion; we want a value that anyone would derive by using the same prediction method and model of your solution. The chief result we look for is prediction in hours. Show us you can research various prediction methods which might be named in our supporting class materials, and then apply them here. This component of your submission should be sufficient to support its use later in the second half of a cost exercise, where you report how much effort the project did take, and then explain why they are the same or different. Presumably you would not want to submit a green light proposal with a cost estimate which predicts there isn't enough time left available to actually do the job, or give a plan which predicts peak burn rates might occur at times when you are heavily conflicted with other course or life obligations.
+
+**Note**: Actual Costs might be the best estimate method for us. We can base our costs based on the small-scale tasks completed in the Scrimmage. Maybe multiply by a seriousness factor (need higher quality product than scrim)
+
+-Parametric relies on knowing many different factors which we may not understand. Used mostly in huge projects such as NASA projects
+
+-Analogous is also a strong option, but we would need to know how TopHat developed and their costs.
+
+# 5              IP STATEMENT
+
+Make clear expectations for ownership or restrictions on this product (which thus includes understanding what limits are placed on components you rely upon in your build.) Note carefully how this information will affect your process. For example, data which are proprietary to the customer would not be something you could or would leave for team members in an open dropbox.
+
+# 6              PROJECT ADVERTISEMENT
+
+At final delivery we will want a description of the project suitable for showing what 435 students do in the class. Thus, make sure your project proposal reflects a plan for getting the advertisement ready. To be clear: **at proposal time we are not asking for a web site, we are asking for you to show you have planned to get a site ready and also incorporated this activity into your cost estimate**. What we need at the project approval time is a press release that could be used to announce your project. (Yes, this is one of the more important planning tools, as we will discuss in class.) Remember: The advertisement material may not necessarily be the same as what you ship for a final project site, depending on your task. It is a formulation that fits into our server; preparing content on the assumption that you are free to stand up content on your favorite Erlang-on-rails engine might result in you being unpleasantly surprised later
+
+Note: website with Log-in and Sign Up links (student and professor). Website will be mostly advertising what we provide. Actual app will be after log-in

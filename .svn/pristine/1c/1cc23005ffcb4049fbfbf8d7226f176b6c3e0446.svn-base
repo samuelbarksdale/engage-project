@@ -1,0 +1,27 @@
+import mongoose, { Schema } from 'mongoose';
+
+const AttendanceSchema = new Schema({
+    uid: {
+        type: String,
+        required: true,
+    },
+    classId: {
+        type: String,
+        required: true,
+    }, 
+    courseId: {
+        type: String,
+        required: true
+    },
+    sectionId: {
+        type: String,
+        required: true
+    },
+    timestamp: {
+        type: Date,
+        required: true
+    }
+});
+
+const AttendanceModel = mongoose.model('Attendance', AttendanceSchema);
+export {AttendanceModel};

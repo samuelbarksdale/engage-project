@@ -1,0 +1,77 @@
+TEAM ENGAGE		77 / 100
+Team members present:	all
+Date/Time of CDR:     	0800 2019-11-22
+
+This rubric is based on the assumption that we have come to strong agreement on the
+shape and objectives of the project by means of our product definition exercise, aka
+the "green light". That is the place where we established our expectations for this
+project, and it is the necessary starting point for us to practice building according 
+to a plan in a process-centered development environment. If planning was effective, 
+then your implementation was straight forward. In any case, we assess how well this 
+went in the present rubric. Later, part of the grade on your final delivery will be 
+based on my assessment of how well the project captures the spirit of the original 
+assignment, which is to say, I will assess how well you actually solved the problem.
+
+
+MUNCHABLES      
+scale:          At the morning demo after long night team hack, I see served ...
+                 x no donuts.
+                __ stale food service powdered sugar cake donuts.
+                __ prepackaged food chain generic donuts.
+                __ diverse assortment of glazed, frosted and jelly-filled Dunkin donuts.
+                __ freshly made raspberry scones and blueberry muffins.
+                __ Marathon Deli baklava.
+
+
+FUNCTIONALITY   20/35
+scale: 		I see nothing work
+		I see some components ...
+		... work partially, though with serious defects or system failures.
+		... doing something even if we can't tell how related to problem.
+    xx		... appear to address articulable parts of the spec, even if with rough edges.
+		... smoothly address major parts of the problem (per spec), even if not all of it.
+		... smoothly solve the problem (per spec), though with brittle edge cases.
+		... smoothly solve the problem (per spec) using realistic data, showing the
+                    product is ready for acceptance testing.
+
+
+CONSISTENCY     15/15
+scale:		System can't be demonstrated, is unrelated to the spec or project has no spec.
+		System demonstrated exhibits substantial discrepancies from spec.
+		System demonstrated exhibits minor (understandable) discrepancies.
+		System demonstrated seems consistent with the spec.
+
+				... hmm, after a fashion, I guess, so most points on functionaity.
+
+
+IMPLEMENTATION  30/35
+dimensions:	Configurations are actively managed and capture essential dependencies w/o bloat.
+		Components support traceability to tests and spec.
+		Reasonable code standards were employed and followed.
+		Record evidences sustained development; the team was fully engaged and employed
+			sound practices that improved quality based on experiences with system use. 
+		Implementation decisions make effective use of resources and are efficient
+			as appropriate to project.
+		Implementation meets reasonable standards for security, privacy, accessibilty,
+			usability and intellectual integrity (above and beyond requirements made 
+			explicitly in the spec.)
+		Code exhibits strong cohesion with low coupling between design units; dependencies
+			are actively managed.
+
+				... the 30 is about as generous as I can go based on some of
+				... the code we pulled and looked over, and with looking at top
+				... level at the config management.
+
+
+PRESENTATION    12/15
+scale: 		The team offered no presentation.
+		In the team presentation I heard/saw ...
+		... an ad hoc pitch that lacked organization and credibility.
+		xxx a basic message though with need of polish (to timing,
+			consistency, expression or similar)
+		... a businesslike pitch/demo offered with professionalism and polish
+
+Advertising site checked:	still tbd
+Cover sheet signed/submitted:	yes
+
+

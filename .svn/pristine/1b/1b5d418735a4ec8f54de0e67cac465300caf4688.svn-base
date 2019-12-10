@@ -1,0 +1,10 @@
+{
+  "webpackServerPort": null,
+  "packagerPort": 19001,
+  "packagerPid": 23843,
+  "expoServerPort": 19000,
+  "expoServerNgrokUrl": "https://3b-6na.anonymous.engage-app-frontend.exp.direct",
+  "packagerNgrokUrl": "https://packager.3b-6na.anonymous.engage-app-frontend.exp.direct",
+  "ngrokPid": 23855,
+  "devToolsPort": 19002
+}

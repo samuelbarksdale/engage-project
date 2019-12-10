@@ -1,0 +1,85 @@
+import React, {Component, useState} from 'react';
+import {Form, Button} from 'react-bootstrap';
+import {observer} from "mobx-react-lite";
+
+interface IPollFormState {
+    question: string,
+    questionType: string,
+    creator: string,
+    choices?: Array<string>,
+}
+
+interface IPollFormProps {
+    courseid: number,
+}
+
+const initialState = {
+    question: '',
+    questionType: '',
+    creator: '',
+    choices: [],
+};
+
+
+export default observer(function PollForm() {
+    const [question, set_question] = useState('');
+    const [questionType, set_questionType] = useState('');
+    const [choices, set_choices] = useState([]);
+
+
+    return (
+        <Form>
+            <Form.Group controlId='question'>
+                <Form.Label>Question</Form.Label>
+                <Form.Control
+                    as='textarea'
+                    placeholder='Enter question for poll'
+                    name='question'
+                    value={question}
+                    onChange={(ev) => set_question(ev.currentTarget.value)}
+                />
+            </Form.Group>
+
+            <Form.Group controlId='questionType'>
+                <Form.Label>Question Type</Form.Label>
+                <Form.Control
+                    as='select' multiple
+                    name='questionType'
+                    value={questionType}
+                    onChange={(ev) => set_questionType(ev.currentTarget.value)}
+                >
+                    <option>Free Response</option>
+                    <option>Multiple Choice</option>
+                </Form.Control>
+            </Form.Group>
+
+            <Form.Group
+                controlId='choices' onChange={(ev) => {
+                debugger;
+                return set_choices(ev.target.values);
+            }}
+            >
+                <Form.Label>Answer Choices</Form.Label>
+                <Form.Text className='text-muted'>
+                    Provide only if question type is Multiple Choice.
+                </Form.Text>
+                <Form.Row>
+                    <Form.Control type='text' placeholder='Answer A'/>
+                </Form.Row>
+                <Form.Row>
+                    <Form.Control type='text' placeholder='Answer B'/>
+                </Form.Row>
+                <Form.Row>
+                    <Form.Control type='text' placeholder='Answer C'/>
+                </Form.Row>
+                <Form.Row>
+                    <Form.Control type='text' placeholder='Answer D'/>
+                </Form.Row>
+            </Form.Group>
+
+            <Button variant='primary' type='submit'>
+                Submit
+            </Button>
+        </Form>
+    )
+});

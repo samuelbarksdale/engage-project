@@ -1,0 +1,133 @@
+User and Course Service API Definition
+
+Data Structures
+User {
+	“id”: (id)
+	"name": (string",
+	"uid": (string),
+	"type": enum{student, educator}
+	"CAS": {}, //any necessary authentication data for the user
+	"classes_current": [(id)], //for students and professors switching between classes and sections
+	“classes_past”: [(id)], //to view old data
+	“connected”: boolean //false until the student creates an account (internal field only)
+}
+
+User_classes {
+	“Class_ids”: [id,id,...]
+}
+
+Classes Group
+//really its by section since different users (professors) can teach different sections of the same course, but one professor shouldn't see another professor's data
+
+Class { 
+	“id”: (id)
+	"course_name": "CMSC435",
+	"sections": [Section {
+		"id": (id)
+		“TA”: (string)
+		"Schedule”: [{
+			“Type”: enum{lecture, discussion, other}
+			"days": [M,W], //can be M,T,W,H,F
+			"time": {start, end},
+			"location": {latitude, longitude, radius},
+		},
+		{
+			“type” : discussion,
+			“days”:[F],
+			"time": {start, end},
+			"location": {latitude, longitude, radius},
+		}]
+		"roster": [string,string] //changing this to UIDs. This will solve the problem of the overlap with the User Objects
+	}]
+	"educators": [(string)]
+	"semester": (string),
+	"topics": [], // Return by ?includes=topics parameter
+}
+
+
+Class_Roster {[
+	“Section_id”: (id),
+	“Roster”: [user_id,user_id]
+],
+	“Section_id”: (id),
+	“Roster”: [user_id,user_id]
+],...}
+	
+
+***Assuming current semester, unless otherwise specified***
+1.  Service shall expose a route to read all courses by user id. (GET)
+2.  Service shall expose a route to read a user’s data (GET)
+3.  Service shall expose a route to read all students by course id. (GET) (returns roster)
+4.  Service shall expose a route to create a course with a name, sections, locations, (GPS coordinates) times, and student rosters. (POST)
+5.  Service shall expose a route to update a course's name, times, locations (GPS coordinates), sections, and student rosters. (PUT)
+6.  Service shall expose a route to delete a course and all related data. This includes data related to that course in other services. (DELETE)
+7.  Service shall expose a route to create course schedules. (POST) (built into course creation)
+8.  Service shall expose a route to update course schedules. (PUT) (built into course updating)
+9.  Service shall expose a route to create a new user (POST)
+10. Service shall expose a route to update a user’s data (PUT)
+11. Service shall expose a route to update a roster by removing one or all students (PUT)
+12. Service shall expose a route to delete a user (DELETE)
+13. Read course data from previous semesters (GET)
+	
+API Endpoints
+/Courses
+	POST:
+		Description: Create a course with name, sections, and schedules
+		Arguments: Course object with Section details
+			All fields are required except “topics”, “TA” with Sections, and “roster”
+		Reponse: Created course object OR Error message due to incompatible or missing fields
+		
+/Courses/{course_id}
+	PUT:
+		Description: Update any field of the Course object. Other fields will be unchanged
+		Arguments: Fields to update and the new data
+			All fields are optional. Empty arguments make no changes and succeed
+		Response: Updated course object OR Error message due to incompatible data
+	DELETE:
+		Description: Remove a class from the database, as well as all associated data in other services
+		Arguments: none
+		Response: Success object OR error message due to invalid/missing course_id
+		
+/Courses/getRoster{course_id}
+	GET:
+		Description: get the roster of a class, or specific section(s)
+		Arguments: “sections”: [id,id] (optional)
+		Response: roster object OR Error message due to invalid course_id, section_id’s
+		
+/Courses/removeUser{course_id}
+	PUT:
+		Description: Remove a single student or educator from a class (assumes TA’s
+			and professors are part of the roster, which is the case on ELMS. Larry’s
+			data will inform this function, if he and his TA’s are in the roster)
+		Arguments: Required: student or educator “id”
+		Response: updated class object with new roster OR error message due to invalid/missing fields
+____________________________________________________________________________
+
+/Users
+	POST:
+		Description: Create a new user
+		Arguments: Required: name, UID, type
+			Optional: classes_current, classes_past
+		Response: Created User object OR Error due to missing/invalid fields
+		
+/Users/{user_id}
+	PUT:
+		Description: update any fields of the specified user
+		Arguments: all user fields except “id” (since it is generated and stored database)
+			Empty arguments field will result in unchanged user object and success
+		Response: updated user object OR error message due to invalid arguments
+	GET:
+		Description: get a user’s data
+		Arguments: none
+		Response: user object OR error message due to invalid user_id
+	DELETE:
+		Description: delete a user from the database
+		Arguments: none
+		Response: Success message OR error message due to invalid user_id
+		
+/Users/getCourses/{user_id}
+	GET:
+		Description: get all current courses of the specified user
+		Arguments: Optional: semester
+		Response: User_classes object, a list of all class_ids associated with the student
+			in the given semester

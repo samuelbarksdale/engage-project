@@ -1,0 +1,10 @@
+{
+  "webpackServerPort": null,
+  "packagerPort": null,
+  "packagerPid": null,
+  "expoServerPort": null,
+  "expoServerNgrokUrl": "https://fu-dfy.anonymous.engage-app-frontend.exp.direct",
+  "packagerNgrokUrl": "https://packager.fu-dfy.anonymous.engage-app-frontend.exp.direct",
+  "ngrokPid": 16541,
+  "devToolsPort": 19002
+}

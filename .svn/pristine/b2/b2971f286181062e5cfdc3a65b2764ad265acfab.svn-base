@@ -1,0 +1,28 @@
+import React from 'react';
+import { Container, Col, Row, Button} from 'react-bootstrap';
+
+export default class LectureDisplay extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleDelete = this.handleDelete.bind(this)
+    }
+
+    handleDelete() {
+        this.props.removeLecture(this.props.lectureName)
+    }
+
+    render() {
+        return (
+            <Container className="mb-3">
+                <Row>
+                    <Col>
+                        {this.props.lectureName}
+                    </Col>
+                    <Col>
+                        <a style={{textDecoration: "none", "cursor": "pointer", "color": "red"}} onClick={this.handleDelete}>X</a>
+                    </Col>
+                </Row>
+            </Container>
+        )
+    }
+}

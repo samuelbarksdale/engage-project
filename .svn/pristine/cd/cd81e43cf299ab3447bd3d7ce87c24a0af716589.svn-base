@@ -1,0 +1,153 @@
+import React from 'react';
+import {Form, Button, Col, Container} from 'react-bootstrap'
+import CSVReader from "react-csv-reader";
+import LectureDisplay from "./LectureDisplay";
+import LectureForm from './LectureForm';
+import api from '../api';
+import parseDays from '../utils';
+export default class CourseForm extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {lectures: [], sections: [], roster: [], courseName: "", tas: ""}
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleLecturesUpload = this.handleLecturesUpload.bind(this);
+        this.handleRosterUpload = this.handleRosterUpload.bind(this);
+        this.handleSectionsUpload = this.handleSectionsUpload.bind(this);
+    }
+
+    async handleSubmit() {
+        try {
+            if (this.state.lectures.length == 0) return this.props.showAlert("warning", "Lectures cannot be empty");
+            else if (this.state.sections.length == 0) return this.props.showAlert("warning", "Sections cannot be empty");
+            else if (this.state.roster.length == 0) return this.props.showAlert("warning", "Roster cannot be empty");
+            else if (this.state.courseName == 0) return this.props.showAlert("warning", "Course Name cannot be empty");
+
+            /*const parseDays = (days) => {
+                try{
+                    return days.match(re)
+                    
+                } catch (e) {
+                    throw new Error("Invalid date character, must be M T W Th F ")
+                }
+            }*/
+            let re = /[A-Z][a-z]?/g
+            let newSections = this.state.sections.map(s => {
+                let {section, days, ...rest} = s;
+                let daysArr = parseDays(days) 
+                if (daysArr) return {...rest, days: daysArr, sectionId: section}
+                return;
+            })
+            let newLectures = this.state.lectures.map(l =>{
+                let {days, ...rest} = l;
+                let daysArr = parseDays(days)
+                if (daysArr) return {...rest, days: daysArr}
+                return;
+            })
+            let course = {
+                courseName: this.state.courseName.toLowerCase(),
+                roster: this.state.roster,
+                lectures: newLectures,
+                sections: newSections,
+                tas: this.state.tas.replace(' ', '').split(',')
+            }
+            let success = await api.createCourse(course);
+            if (success) {
+                this.props.showAlert("success", "Course successfully created")
+            } else {
+                this.props.showAlert("danger", "The Course could not be created")
+            }
+        } catch(e) {
+            this.props.showAlert("danger", e.message)
+        }
+        
+    }
+
+    // handleSaveLecture(lecture) {
+    //     this.setState({lectures: this.state.lectures.concat(lecture)});
+    // }
+    // handleRemoveLecture(lectureName) {
+    //     let removeIdx = this.state.lectures.findIndex(l => l.lectureName === lectureName);
+    //     this.setState({lectures: this.state.lectures.slice(0, removeIdx).concat(this.state.lectures.slice(removeIdx+1))})
+    // }
+
+    handleRosterUpload(data) {
+        this.setState({roster: data});
+    }
+
+    handleSectionsUpload(data) {
+        this.setState({sections: data})
+    }
+
+    handleLecturesUpload(data) {
+        this.setState({lectures: data})
+    }
+
+    render() {
+        const options = {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+        }
+        return  (
+            <Form onSubmit={this.handleSubmit}>
+                <Form.Row>
+                    <Form.Group as={Col}>
+                        <Form.Label>Course Name</Form.Label>
+                        <Form.Control 
+                            onChange={(e) => {this.setState({courseName: e.target.value})}} 
+                            value={this.state.courseName} 
+                            type="text" 
+                            placeholder="CMSC216" 
+                        />
+                    </Form.Group>
+                    
+                </Form.Row>
+                <Form.Group>
+                    <Form.Label>Comma-seperated TA Directory Ids</Form.Label>
+                    <Form.Control 
+                        type="text"
+                        onChange={(e)=>{this.setState({tas:e.target.value})}}
+                        value={this.state.tas}
+                    />
+                </Form.Group>
+                <Form.Row>
+                    <Form.Group as={Col} >
+                        <Form.Label>Roster</Form.Label>
+                        <CSVReader
+                            onFileLoaded={this.handleRosterUpload}
+                            parserOptions={options}
+                        />
+                    </Form.Group>
+
+                    <Form.Group as={Col} >
+                        <Form.Label>Lectures</Form.Label>
+                        <CSVReader
+                            onFileLoaded={this.handleLecturesUpload}
+                            parserOptions={options}
+                        />
+                    </Form.Group>
+                    <Form.Group as={Col} >
+                        <Form.Label>Sections</Form.Label>
+                        <CSVReader
+                            onFileLoaded={this.handleSectionsUpload}
+                            parserOptions={options}
+                        />
+                    </Form.Group>
+                </Form.Row>
+                
+                {/* <h5>Lectures</h5>
+                    <div className="mb-5">
+                        {this.state.lectures.length > 0 && 
+                            this.state.lectures.map(lecture => {
+                                return <LectureDisplay key={lecture.lectureName} removeLecture={this.handleRemoveLecture} {...lecture} />
+                            })
+                        }
+                    </div>
+                    <LectureForm saveLecture={this.handleSaveLecture}/> */}
+       
+                <Form.Row><Button onClick={this.handleSubmit} style={{marginTop: "10px", background: "#990000", borderColor: "#990000"}}  size="md">Create Course</Button></Form.Row>
+               
+            </Form>
+        )
+    }
+}

@@ -1,0 +1,73 @@
+import {ICourse, ISection, IScheduleMeeting} from '../../common/model-definitions'
+
+export const course_store: Record<string, ICourse> = {
+    1: {
+        "_id": '1',
+        "name": "CMSC435",
+        "educators": ["jpurtillo", "araveesh"],
+        "semester": "Fall2019",
+        "topics": [
+            {date: new Date('2019-11-19'), topicsCovered: ["Intellectual Property", "Lab"]}, {
+                date: new Date('2019-11-22'),
+                topicsCovered: ["CDR"]
+            }],
+        "sections": ['10', '11']
+    },
+    2: {
+        "_id": '2',
+        "name": "CMSC425",
+        "educators": ["araveesh"],
+        "semester": "Spring2019",
+        "topics": [
+            {date: new Date('2019-11-19'), topicsCovered: ["Intellectual Property", "Lab"]}, {
+                date: new Date('2019-11-22'),
+                topicsCovered: ["CDR"]
+            }],
+        "sections": ['10', '11']
+    }
+};
+
+export const section_store: Record<string, ISection> = {
+    section0101: {
+        "_id": '10',
+        "name": "0101",
+        "ta": ["araveesh"],
+        "roster": ["mskopic", "nendy"],
+        "schedule": ['100', '200'],
+    },
+    section0110: {
+        "_id": '11',
+        "name": "0110",
+        "ta": ["araveesh"],
+        "roster": ["aravi"],
+        "schedule": ['100'],
+    }
+
+};
+
+export const schedule_meeting_store: Record<string, IScheduleMeeting> = {
+    '100': {
+        _id: '100',
+        type: 1, //ClassTypeEnum
+        days: [2, 4], //DayEnum
+        timeStart: 14.0,
+        timeEnd: 15.25,
+        location: {
+            lat: 38.990104,
+            long: -76.936399
+        }
+    },
+    '200': {
+        _id: '200',
+        type: 2, //ClassTypeEnum
+        days: [5], //DayEnum
+        timeStart: 12.5,
+        timeEnd: 13.75,
+        location: {
+            lat: 38.990104,
+            long: -76.936399
+        }
+    }
+};
+
+export const courses_data: ICourse[] = Object.keys(course_store).map(k => course_store[k]);

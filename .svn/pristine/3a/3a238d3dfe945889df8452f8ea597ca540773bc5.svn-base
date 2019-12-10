@@ -1,0 +1,49 @@
+import React, { Component } from "react";
+import CourseCard from '../components/CourseCard'
+import {
+    BrowserRouter as Router,
+    Link,
+    useLocation,
+    Switch, 
+    Route
+  } from "react-router-dom";
+
+  import Dashboard from './Dashboard'; 
+
+
+const data = [
+    {'courses': 'These are my courses'},
+    {'courses': 'These are my courses'},
+    {'courses': 'These are my courses'},
+    {'courses': 'These are my courses'},
+    {'courses': 'These are my courses'},
+    {'courses': 'These are my courses'},
+   
+    
+]; 
+
+
+export default class Courses extends Component {
+    
+   
+
+
+  render() {
+   
+  
+    let list = data.map((data) => {
+        return (<CourseCard title={'courses'} reason={data.courses} />)
+
+
+    }); 
+
+    return (
+
+      <div id="courses">
+        {list}
+        <Link href='/dashboard'>Click here to go to Dashboard</Link>
+      </div>
+   
+    );
+  }
+}

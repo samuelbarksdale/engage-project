@@ -1,0 +1,185 @@
+import React, { Component } from 'react';
+import {
+  
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Button,
+  Image
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import Constants from 'expo-constants';
+import * as Permissions from 'expo-permissions';
+
+
+
+
+
+
+
+
+export default class AbsenceForm extends Component {
+
+
+    
+    state = {
+        email: '',
+        uid: '',
+        section: '',
+        reason: '',
+        extension_requests: '',
+        dates_for_absence: '',
+        image: null
+      }; 
+    
+    onLogin() {
+      const { email, uid, reason, extension_requests, image } = this.state;
+  
+      Alert.alert('Credentials', `email: ${email}  \n
+                       uid: ${uid} reason: ${reason} \n
+                          extension_requests: ${extension_requests}`);
+    }
+  
+    render() {
+
+      let { image } = this.state;
+
+      return (
+        <View style={styles.container}>
+        <Text style={styles.titleText}>Submit an Absence Request</Text>
+          <Text style={styles.titleText}>Momento</Text>
+          <TextInput
+            value={this.state.email}
+            keyboardType = 'email-address'
+            onChangeText={(email) => this.setState({ email })}
+            placeholder='Full Name'
+            placeholderTextColor = 'white'
+            style={styles.input}
+          />
+          <TextInput
+            value={this.state.uid}
+            onChangeText={(uid) => this.setState({ uid })}
+            placeholder={'UID'}
+            secureTextEntry={false}
+            placeholderTextColor = 'white'
+            style={styles.input}
+          />
+          <TextInput
+            value={this.state.section}
+            onChangeText={(section) => this.setState({ section })}
+            placeholder={'Section'}
+            secureTextEntry={false}
+            placeholderTextColor = 'white'
+            style={styles.input}
+          />
+          <TextInput
+            value={this.state.dates_for_absence}
+            onChangeText={(reason) => this.setState({ reason })}
+            placeholder={'Dates for Absence'}
+            secureTextEntry={false}
+            placeholderTextColor = 'white'
+            style={styles.input}
+          />
+          <TextInput
+            value={this.state.reason}
+            onChangeText={(dates_for_absence) => this.setState({ dates_for_absence })}
+            placeholder={'Reason for Absence'}
+            secureTextEntry={false}
+            placeholderTextColor = 'white'
+            style={styles.input}
+          />
+          <TextInput
+            value={this.state.extension_requests}
+            onChangeText={(extension_requests) => this.setState({ extension_requests })}
+            placeholder={'Assignment Extension Requests'}
+            secureTextEntry={false}
+            placeholderTextColor = 'white'
+            style={styles.input}
+          />
+          
+          <Button
+          title="Please Upload Valid Documentation"
+          onPress={this._pickImage}
+          />
+
+        {image &&
+        <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
+      
+       
+          <TouchableOpacity
+            style={styles.button}
+            onPress={this.onLogin.bind(this)}
+         >
+           <Text style={styles.buttonText}> Submit! </Text>
+         </TouchableOpacity>
+          
+        </View>
+      );
+    }
+
+    componentDidMount() {
+      this.getPermissionAsync();
+      console.log('hi');
+    }
+  
+    getPermissionAsync = async () => {
+      if (Constants.platform.ios) {
+        const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+        if (status !== 'granted') {
+          alert('Sorry, we need camera roll permissions to make this work!');
+        }
+      }
+    }
+  
+    _pickImage = async () => {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1
+      });
+  
+      console.log(result);
+  
+      if (!result.cancelled) {
+        this.setState({ image: result.uri });
+      }
+    };
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+
+  button: {
+    alignItems: 'center',
+    backgroundColor: 'powderblue',
+    width: 200,
+    height: 44,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'white',
+    borderRadius: 25,
+    marginBottom: 10,
+  },
+  buttonText:{
+    
+    fontSize: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  input: {
+    width: 200,
+   
+    fontSize: 20,
+    height: 44,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'white',
+    marginVertical: 10,
+  },
+});

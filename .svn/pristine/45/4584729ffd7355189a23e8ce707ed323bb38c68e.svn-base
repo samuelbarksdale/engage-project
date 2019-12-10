@@ -1,0 +1,28 @@
+import mongoose, { Mongoose } from 'mongoose';
+
+
+
+const absenceSchema = new mongoose.Schema({
+    files: {
+        type: [String],
+        required: true
+    },
+    status: {
+        type: String,
+        required: true
+    },
+    created_at: {
+        type: Date,
+    },
+    uid: String,
+    section_id: String,
+    missed_days: {
+        start: String,
+        end: String,
+    },
+    type: String,
+    rationale: String
+});
+
+const AbsenceModel = mongoose.model('Absence', absenceSchema);
+export {AbsenceModel}

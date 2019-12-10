@@ -1,0 +1,260 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+import axios from 'axios'
+
+const coursePORT = process.env.COURSE_PORT
+const courseServiceUrl = `http://course:${coursePORT}`;
+const app = express();
+const port = process.env.PORT;
+
+async function getUser(uid) {
+    const endpoint = `/users/${uid}`;
+    try {
+        return await axios.get(courseServiceUrl + endpoint);
+    } catch (e) {
+        if(e.response.status === 404) throw new Error("The uid does not refer to an existing user");
+        throw new Error("Internal Server Error")
+    }
+}
+async function isEducator(uid, user={}) {
+    if (Object.keys(user).length === 0) {
+        user = await getUser(uid);
+    }
+        
+    return user.type === 2;
+}
+
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+
+mongoose
+    .connect(
+        'mongodb://mongo:27017/polling-service',
+        { useNewUrlParser: true}
+    )
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.log(err));
+mongoose.set('useFindAndModify', false);
+
+const Schema = mongoose.Schema;
+
+const pollModel = new Schema({
+    id: {type: String},
+    course_id: {type: String},
+    status: {type: String},
+    creator: {type: String},
+    question: {type: String},
+    type: String,
+    choices: [{
+        choice: {type: String},
+        choice_id: {type: String},
+        votes: {type: Number},
+        voters: [{uid: {type: String}}]
+    }],
+    text_answers: [{
+        answer: {type: String},
+        uid: {type: String}
+    }]
+});
+
+var Polls = mongoose.model('Polls', pollModel);
+
+app.get('/polls', (req, res) => {
+    // Valid queires are: course_id, type, status, creator
+    const query = Object.keys(req.query).reduce((acc, key) => {
+        acc[key] = req.query[key].toLowerCase();
+        return acc;
+    }, {});
+    Polls.find(query, (err, polls) => {
+        if (err) console.error(err);
+        res.json(polls);
+    });
+});
+
+app.post('/polls', async (req, res) => {
+    let {uid} = req.body;
+
+    try {
+        if (!isEducator(uid)) return res.status(403).json({message: "Only educators can create polls"});
+    } catch (e) {
+        console.log(e)
+        res.status(500).json(e.message)
+    }
+    
+    let pollObj = {};
+    if (!req.body.type || req.body.type.length === 0) return res.status(400).json({message: "type is a required field"})
+    else pollObj.type = req.body.type.toLowerCase();
+    if (pollObj.type == 'choice') {
+        if (!req.body.choices || req.body.choices.length === 0) return res.status(400).json({message: "Choices array is empty"})
+        pollObj.choices = req.body.choices.map((choice, idx) => {
+            return {
+                choice_id: idx,
+                choice: choice,
+                voters: [],
+                votes: 0
+            }
+        });
+    } else if(pollObj.type == "text") {
+        if (req.body.choices) return res.status(400).json({message: "Poll type text cannot have choices"});
+    } else return res.status(400).json({message: "Invalid type: poll type must be either text or choice"});
+
+    if (!req.body.course_id || req.body.course_id.length === 0) return res.status(400).json({message: "course_id is a required field"});
+    else pollObj.course_id = req.body.course_id.toLowerCase();
+
+    if (!req.body.question) return res.status(400).json({message: "question is a reqired field"});
+    else pollObj.question = req.body.question;
+    
+    let poll = Object.assign(
+        pollObj,
+        {
+            status: "open",
+            creator: uid,
+        },
+    )
+    var newPoll = new Polls(poll);
+    newPoll.save();
+    res.status(201).json(newPoll);
+});
+
+app.get('/polls/courses/:course_id/', (req, res) => {
+    Polls.find({'course_id': req.params.course_id}, (err, polls) => {
+        if (err) console.error(err);
+        res.json(polls);
+    });
+});
+
+app.get('/polls/students/:student_id/', (req, res) => {
+    Polls.find({$or:[{'choices.voters.student_id': req.params.student_id},{'text_answers.student_id': req.params.student_id}]},
+    (err, polls) => {
+        var ans = [];
+        polls.map((po) => {
+            var cho = po.choices;
+            var txt = po.text_answers;
+            cho.map((c) => {
+                var vtrs = c.voters;
+                vtrs.map((v) => {
+                    if (v.student_id == req.params.student_id) {
+                        ans.push({choice: c.choice_id, votes: c.votes});
+                    };
+                })
+                if (c.voters.student_id == req.params.student_id) {
+                    console.log({choice_id: c.choice_id, votes: c.votes})
+                    ans.push({choice: c.choice_id, votes: c.votes});
+                };
+            });
+            txt.map((t) => {
+                if (t.student_id == req.params.student_id) {
+                    ans.push(t);
+                }
+            });
+        })
+        if (err) console.error(err);
+        res.json(ans);
+    });
+});;
+
+app.get('/polls/:poll_id/', (req, res) => {
+    const {poll_id} = req.params;
+    Polls.findById(poll_id, (err, polls) => {
+        if (err) console.error(err);
+        if (polls == null) return res.status(404).json({message: "No poll by that id"})
+        return res.json(polls);
+    });
+});
+
+app.delete('/polls/:poll_id/', (req, res) => {
+    let {poll_id} = req.params;
+    let {uid} = req.body;
+    let requestedPoll = Polls.findById(poll_id);
+
+    if (!requestedPoll) res.status(404);
+    if (requestedPoll.creator !== uid) res.status(403);
+
+    Polls.deleteOne({'id': poll_id}, (err) => {
+        if (err) return console.error(err);
+        return res.status(204);
+    });
+})
+
+app.get('/polls/:poll_id/choices/:choice_id', (req, res) => {
+    Polls.findOne(
+        {'id': req.params.poll_id, 'choices.choice_id': req.params.choice_id},
+        (err, polls) => {
+            if (err) console.error(err);
+            var cho = polls.choices;
+            var cho_id;
+            cho.map((choice) => {
+                if (choice.choice_id == req.params.choice_id) {
+                    cho_id = choice;
+                }
+            })
+            res.json(cho_id);
+        })
+})
+   
+
+app.put('/polls/:poll_id/choices/:choice_id', (req, res) => {
+    const {poll_id, choice_id} = req.params;
+    const {uid} = req.body;
+
+    let requestedPoll = Polls.findById(poll_id).exec();
+    if (!requestedPoll) return res.sendStatus(404);
+    if (requestedPoll.type == 'text') return res.status(400).json({message: "Cannot perform a vote action on a text poll "});
+    if (requestedPoll.status == 'closed') return res.status(400).json({message: "Cannot answer a closed poll"})
+    if (requestedPoll.choices.voters.includes(uid)) return res.sendStatus(204);
+
+    Polls.updateOne(
+        {'id': poll_id, 'choices.choice_id': choice_id},
+        {$push: {'choices.$.voters': {uid}}, $inc: {'choices.$.votes': 1}},
+        (err, poll) => {
+            if (err) {
+                console.error(err)
+                res.sendStatus(500)
+            }
+            poll.save();
+            res.json(poll);
+        });
+});
+
+app.put('/polls/:poll_id/close', async (req, res) => {
+    const {uid} = req.body;
+    const {poll_id} = req.params;
+    let user = await getUser(uid);
+    if (!isEducator(uid, user)) return res.sendStatus(403);
+    let requestedPoll = await Polls.findById(poll_id).exec();
+    console.log(requestedPoll)
+    if (!requestedPoll) return res.sendStatus(404);
+    if (requestedPoll.creator !== uid) return res.sendStatus(403);
+
+    let closedPoll = await Polls.findByIdAndUpdate(poll_id, {status: "closed"}).exec();
+    res.sendStatus(204)
+});
+
+app.get('/polls/:poll_id/text', (req, res) => {
+    Polls.findOne({'id': req.params.poll_id, type: "text"}, 'text_answers', (err, poll) => {
+        if (err) console.error(err);
+        res.json(poll);
+    });
+});
+
+app.put('/polls/:poll_id/text', (req, res) => {
+    Polls.findOneAndUpdate(
+        {'id': req.params.poll_id}, 
+        {$push: {text_answers: {student_id: req.body.student_id,answer: req.body.answer}}},
+        (err, poll) => {
+            if (err) console.error(err);
+            poll.save();
+            res.json(poll);
+    });
+});
+
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.error(err)
+    }
+    return console.log(`Server listening on port ${port}`);
+});

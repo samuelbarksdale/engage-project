@@ -1,0 +1,204 @@
+# Tech Review
+
+## Purpose
+
+The purpose of this document is to review the available options in terms of the development. 
+
+The tech stack that would be chosen should be followed up with a specific review on the stack and a coding guidelines.
+
+The guideline parameters for this project that is common to all (unless specified differently) proposed tech choices are the following (in a descending order of priority) :
+
+1. Popularity in the market
+2. Cross-platform
+3. Open Source / Free
+4. Familiarity of the team
+5. Learning curve / Scaling 
+
+## Programming Languages 
+
+### [Typescript](https://www.typescriptlang.org/)
+
+* Superset of JavaScript that compiles to clean JavaScript output
+* Will be used in back-end and front-end
+
+### [Python](https://www.python.org/)
+
+* Will be used as scripting language for dev-ops tasks
+* Will be used to analyze data and producing insights reports
+
+## front-end
+### [React](https://github.com/facebook/react)
+
+* JavaScript library for building user interfaces by Facebook.
+
+### [React Native](https://github.com/facebook/react-native)
+
+* A framework for building native apps with React.
+
+### [Redux](https://github.com/reduxjs/redux)
+
+* State manager for Javascript apps
+* Highly declarative
+* Pros:
+  * Easy to test
+  * Easy to debug 
+  * Easy to read
+* Cons:
+  * Requires a lot of boilerplate code
+  * Relatively slow learning curve
+
+### [react-redux](https://react-redux.js.org/)
+
+* Official React bindings for Redux.
+
+## back-end
+### [NodeJS](https://github.com/nodejs/node)
+
+* Javascript runtime environment
+
+### [GraphQL](https://graphql.org/learn/)
+
+* Query language for APIs
+
+### [graphql-js](https://github.com/graphql/graphql-js)
+
+* A reference implementation of GraphQL for JavaScript
+
+### [Webpack](https://github.com/webpack/webpack)
+
+* Module bundler
+* [Typescript: React & Webpack](https://www.typescriptlang.org/docs/handbook/react-&-webpack.html)
+
+## data-base
+
+<u>**TODO**</u>: To be completed
+
+### [Firebase]([https://firebase.google.com](https://firebase.google.com/))
+
+* Should be used for prototyping propose
+* Pros:
+  * Easy to use
+  * No infrastructure needed
+* Cons:
+  * Not free on scale
+
+### [MongoDB]([https://www.mongodb.com](https://www.mongodb.com/))
+
+* NoSQL
+
+### [MySQL]([https://www.mysql.com](https://www.mysql.com/))
+
+* SQL
+
+### Further Reading:
+
+* [Selecting database as data source for GraphQL server](https://medium.com/@wtr/selecting-database-as-data-source-for-graphql-server-e3281fcefb2)
+* [2019 Database Trends – SQL vs. NoSQL, Top Databases, Single vs. Multiple Database Use](https://scalegrid.io/blog/2019-database-trends-sql-vs-nosql-top-databases-single-vs-multiple-database-use/)
+  * *TL;DR:* Might be worth looking for an hybrid solution 
+* [NoSQL + SQL = MySQL](https://www.mysql.com/products/enterprise/document_store.html)
+  * MySQL might offer both?
+
+## Database ORM
+
+### [Prisma](https://github.com/prisma/prisma)
+
+* Looks like nice ORM that works good with GraphQL and Typescript
+
+### Further Reading:
+
+* [Why you should avoid ORMs (with examples in Node.js)](https://blog.logrocket.com/why-you-should-avoid-orms-with-examples-in-node-js-e0baab73fa5/ )
+
+## Testing
+
+<u>**TODO**</u>: To be completed
+
+### [Jest](https://jestjs.io/)
+
+* Supported by Facebook, recommended for react
+
+### [Mocha](https://mochajs.org/)
+
+* Used more
+
+### Further reading:
+
+* [Top Javascript Testing Frameworks in Demand for 2019](https://blog.bitsrc.io/top-javascript-testing-frameworks-in-demand-for-2019-90c76e7777e9)
+* [Jest vs Mocha: Which Should You Choose?](https://blog.usejournal.com/jest-vs-mocha-whats-the-difference-235df75ffdf3)
+
+## Linting
+
+Linting is the process of running a program that will analyze code for potential errors.
+
+<u>**TODO**</u>: To be completed
+
+Further reading:
+
+* https://www.sitepoint.com/comparison-javascript-linting-tools/
+
+## Package Manager
+
+* Package managers are tools for managing external libraries requirements for the project.
+* Helps avoiding situation of version discrepancy. 
+* Helpful for developing and deployment
+
+### [NPM](https://www.npmjs.com/)
+
+Further reading:
+
+* [NPM Vs Yarn 2019](https://medium.com/@vincentnewkirk/npm-vs-yarn-2019-e88757b17038)
+
+## Web Server
+
+### [Apache]([https://httpd.apache.org](https://httpd.apache.org/))
+
+<u>**TODO**</u>: To be completed
+
+## Deployment automation
+
+<u>**TODO**</u>: To be completed
+
+### [Jenkins]([https://jenkins.io](https://jenkins.io/)) (?)
+
+## Logging
+
+<u>**TODO**</u>: To be completed
+
+### [ELK Stack](https://www.elastic.co/what-is/elk-stack)
+
+## Additional
+
+### Using Boilerplates
+
+Boilerplates are basic apps code that written in a general and clean way. It's good way of starting a project and also for referencing for ideas.
+
+- *[React - Starter Kits](https://reactjs.org/community/starter-kits.html)*
+- *[Github - Create React App](https://github.com/facebook/create-react-app)*
+- [**HTML5** **★** **BOILERPLATE**](https://html5boilerplate.com/)
+- *[Github - React (Web + Native) Starter Kit](https://github.com/mcnamee/react-native-starter-kit)*
+- [kyt](https://github.com/nytimes/kyt)
+  - Webpack
+  - Jest
+  - ESlint
+  - Stylelint
+
+### React hooks
+
+* React hooks feature are essentially new API calls that added into react.
+* It makes using react less tedious by shortening significantly heavy boiler plating .
+* It also enables you to get rid of a lot of complexity by making the use of classes redundant in many cases.
+* It allows you to have better code usability.
+* It is 100% compatible with old way of writing react, so adapting it can be done gradually.
+
+Source:
+
+* *[React - Introducing Hooks](https://reactjs.org/docs/hooks-intro.html)*
+* *[React Conf - React Today and Tomorrow and 90% Cleaner React With Hooks](https://www.youtube.com/watch?time_continue=477&v=dpw9EHDh2bM)*
+
+#### Integration with Redux
+Redux does not intended to give solutions to the problems above, and thus it shall not be a factor regarding the use of Redux or not. It does not change the way of thinking about Redux as a solution, but it has some implication of the syntax used with the integration of both.
+
+Source:
+
+* *[Medium - Do React Hooks Replace Redux?
+](https://medium.com/javascript-scene/do-react-hooks-replace-redux-210bab340672)*
+* *[React-Redux documentation - Hooks](https://react-redux.js.org/next/api/hooks)*

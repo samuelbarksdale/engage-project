@@ -1,0 +1,8 @@
+NODE_ENV=production
+PORT=8081
+MONGO_DB=attendance-service
+MONGO_PORT=27000
+USE_HTTPS=true
+SERVER_KEY=./certs/server.key
+SERVER_CERT=./certs/server.cert
+COURSE_PORT=8080

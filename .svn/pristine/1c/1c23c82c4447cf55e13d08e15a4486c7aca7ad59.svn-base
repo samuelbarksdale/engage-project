@@ -1,0 +1,84 @@
+export interface IUser {
+    uid: string;
+}
+
+export interface IEducator extends IUser {
+
+}
+
+export interface IStudents extends IUser {
+
+}
+
+type ISemester = string;
+type ITopicNames = string;
+
+interface ITopic {
+    date: Date;
+    topicsCovered: ITopicNames[]
+}
+
+type IRoaster = IStudents['uid'][]
+
+enum EScheduleMeeting {
+    lecture,
+    discussion,
+    other
+}
+
+enum EDays {
+    M,
+    T,
+    W,
+    Th,
+    F,
+}
+
+interface ILocation {
+    lat: number;
+    long: number;
+}
+
+type IMeetingTime = number;
+
+interface IScheduleMeeting {
+    type: EScheduleMeeting;
+    days: EDays[];
+    timeStart: IMeetingTime;
+    timeEnd: IMeetingTime;
+    location: ILocation;
+}
+
+type ISchedule = IScheduleMeeting[]
+
+interface ISection {
+    _id: string;
+    name: string,
+    ta: IEducator['uid'][],
+    roster: IRoaster
+    schedule: ISchedule
+}
+
+export interface ICourse {
+    id: string;
+    name: string;
+    educators: IEducator['uid'][];
+    semester: ISemester;
+    topics: ITopic[];
+    sections: ISection['_id'][]
+}
+
+export const courses_data = [
+    {
+        id: '1',
+        'course_name': 'CMSC135 - 1',
+        'educators': ["Jim Purtilo"],
+        'sections': [{
+            'id': '0101',
+            'TA': 'Prashant',
+            'roster': ["123456789"]
+        }],
+        'semester': '(2019)',
+        'topics': []
+    },
+];

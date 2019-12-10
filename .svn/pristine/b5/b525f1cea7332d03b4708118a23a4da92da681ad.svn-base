@@ -1,0 +1,114 @@
+import {LectureModel, SectionModel} from "../schemas/classSchema";
+import { UserModel } from "../schemas/userSchema";
+import { Mongoose } from "mongoose";
+import { parseTime, padWithZero } from "../helpers/utils";
+import ServerError from '../helpers/ServerError'
+
+export default {
+    
+    list: async function(req, res) {
+        let filter = {}
+        filter = Object.assign(req.query, filter);
+        let result = await LectureModel.find(filter).exec();
+        return res.json(result)
+    },
+    create: async function(req, res) {
+        const { 
+            courseName,
+            tas,
+            roster,
+            lectures,
+            sections
+        } = req.body;
+        console.log(req.body)
+
+        try {
+            let educator = await UserModel.findOne({did: req.session.cas.user}).exec();
+            if (!educator || educator.authority !== 'ADMIN') throw new ServerError("You must be an educator to setup a course!", 400)
+            let registeredTAs = await UserModel.count({did: {$in: tas}, authority: "ADMIN"}).exec();
+            if (registeredTAs !== tas.length) throw new ServerError("You provided TAs which have not been registered in the system", 400);
+            let educators = [educator].concat(registeredTAs);
+
+            const strDays2NumDays = days => days.map(day => ['M','T','W','Th','F'].indexOf(day) + 1);
+            const newSchedule = ({start, end, days, lat, lng, radius}) => ({
+                time: {start: parseTime(start), end: parseTime(end)}, 
+                days: strDays2NumDays(days), 
+                location: {lat, lng, radius}
+            });
+            let sectionObjs = sections.map(({section,lecture,start,end,days,lat,lng,radius}) => 
+                    new SectionModel({
+                        sectionId: padWithZero(section, 4),
+                        courseName,
+                        lectureName: lecture,
+                        schedule: newSchedule({start, end, days, lat, lng, radius})
+                    })
+            );
+
+
+            let lectureObjs = lectures.map(({lecture, start, end, days, lat, lng, radius}) => {
+                return new LectureModel({
+                    educators,
+                    courseName,
+                    lectureName: lecture,
+                    schedule: newSchedule({start, end, days, lat, lng, radius})
+                })
+            });
+
+            let sectionMap = sectionObjs.reduce((acc, doc) => {
+                if (acc[doc.sectionId]) return acc;
+                acc[doc.sectionId] = {lectureName: doc.lectureName, courseName: doc.courseName};
+                return acc;
+            }, {})
+            console.log(sectionMap)
+            return res.sendStatus(200)
+            // let lecturesDocs = await LectureModel.insertMany(lectureObjs);
+            // let sectionsDocs = await SectionModel.insertMany(sectionObjs);
+
+            await Promise.all(roster.map(async ({name, uid, did, email, section}) => {
+                let sec = padWithZero(section, 4).toString()
+                
+                let registeredUser = await UserModel.findOne({did}).exec();
+                let details = sectionMap[sec];
+                console.log(Object.keys(sectionMap)[0])
+                console.log(sec)
+                if (!details) return
+                if (!registeredUser) {
+                    let newUser = new UserModel({
+                        name,
+                        uid,
+                        did,
+                        email,
+                        section: [section],
+                        lecture: [details.lectureName],
+                        course: [details.courseName],
+                        authority: "STUDENT"
+                    });
+                    // console.log(newUser)
+                    // return await newUser.save();
+                }else {
+                    // return await UserModel.updateOne(
+                    //     {_id: registeredUser._id}, 
+                    //     {$addToSet: {
+                    //             lectures: details.lectureName, 
+                    //             courses: details.courseName, 
+                    //             sections: padWithZero(section, 4)
+                    //     }},
+                    //     {upsert: true}
+                    // );
+                }
+            }));
+            res.sendStatus(204);
+        } catch (e) {
+            console.error(e)
+            if (e instanceof ServerError) return res.status(e.code).json({message: e.message});
+            return res.sendStatus(500);
+        }
+    },
+            
+    retrieve: async function(req, res) {
+        let classId = req.params.id;
+        let foundClass = LectureModel.findOne({classId}).exec();
+        if (!foundClass) return res.status(404).message({message: "class not found"});
+        return res.json(foundClass);
+    },
+}

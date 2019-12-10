@@ -1,0 +1,27 @@
+import path from 'path';
+import _ from 'lodash';
+
+export default function Routes(app, ctx) {
+    async function serveDocs(req, res) {
+        let options = {
+            root: path.join(__dirname, "../docs"),
+        }
+        res.sendFile('./output.html', options)
+
+    }
+
+    async function getAllAbsences(req, res){
+        try {
+            let result = await ctx.db.collection('absence').find({})
+        } catch (e){
+            console.error(e)
+            return res.status(500).end();
+        }
+
+    }
+
+    app.get('/', serveDocs);
+    app.route('/absences')
+        .get(getAllAbsences)
+
+}

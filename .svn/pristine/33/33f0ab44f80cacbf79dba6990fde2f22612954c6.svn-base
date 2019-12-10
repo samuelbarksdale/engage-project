@@ -1,0 +1,32 @@
+import React, { Component } from "react";
+import AbsenceCard from '../components/AbsenceCard'
+
+
+
+const data = [
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+]; 
+
+export default class Absence extends Component {
+    
+   
+
+
+  render() {
+    let list = data.map((data) => {
+        return (<AbsenceCard title={'Absences'} reason={data.reason}/>)
+
+
+    }); 
+
+    return (
+      <div id="absence">
+        {list}
+      </div>
+    );
+  }
+}

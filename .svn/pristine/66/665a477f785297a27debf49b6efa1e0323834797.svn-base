@@ -1,0 +1,32 @@
+import React, { Component } from "react";
+import PollCard from '../components/PollCard'
+import PollForm from '../components/PollForm'
+import CourseCard from '../components/CourseCard'
+
+const data = [
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+    {'reason': 'This is submit'}, 
+]; 
+
+export default class Polls extends Component {
+
+    render() {
+        let list = data.map((data) => {
+            return (<PollCard title={'Polls'} reason={data.reason}/>)
+    
+    
+        }); 
+    
+        return (
+          <div>
+            <PollForm/>
+            <div id="openPolls">
+              {list}
+            </div>
+          </div>
+        );
+    }
+}

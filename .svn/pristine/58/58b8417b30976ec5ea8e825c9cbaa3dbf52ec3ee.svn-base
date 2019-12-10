@@ -1,0 +1,49 @@
+Absence Service (sam)
+Absence {
+	“id”: (id) 
+	"student_id": (string)
+	“Course_name”: (string),
+	“section”: [{Section}],
+	“missed_days”: [(datetime), (datetime)],
+	"time_stamp": [“time_submitted”] (maybe the epoch time?)
+	"type": (string)
+	"rationale": (string),
+	"documentation": (file)
+	"status": enum{Approved, Rejected, Pending} 
+}
+
+Endpoints
+/absences
+	POST
+		Description: Create an absence report for a student. with absence id, reason, rationale, uid, course   
+name, section, time stamp.
+		Arguments: Required: uid, course name, section, reason, rationale
+        Optional: proof.
+		Response: Created course object OR Error message due to incompatible or
+missing fields
+/absences/{absence_id}
+	PUT
+		Description: Update absence given id 
+		Arguments: Required: absence id
+			       Optional: all fields are optional, set the field that you want to change
+		Response: updated absence object OR error message due to invalid arguments
+	Delete
+		Description: Delete record of the absence given the absence id
+		Arguments: Required: absence Id of absence you want to delete
+		Response: Success object OR error message due to invalid/missing course_id
+/absences/getAllAbsences
+	GET
+		Description: Return a list of all absence ids
+		Arguments: none
+		Response: array of all absence IDs
+/absences/students/:student_id
+	GET
+		Description: return all absences for a given student
+		Arguments: Required: student id
+		Response: array of absence objects for a given student or error message for 
+invalid/missing student id
+/absence/missingWorkRequest{course_id, date},
+	GET
+		Description: returns the course work for that given course_id and date
+		Arguments: Required: course_id and date
+		Response: Course object or error message for invalid/missing course_id/date
